@@ -1,0 +1,53 @@
+ai-recommendation-engine/
+│
+├── frontend/                       # React + TypeScript (Vite)
+│   ├── public/                     # Static assets (no code here)
+│   │   ├── favicon.ico
+│   │   └── logo.png
+│   ├── src/
+│   │   ├── api/                    # Functions to call Render Backend
+│   │   │   ├── axiosInstance.ts    # Centralized API config
+│   │   │   ├── auth.ts             # Login/Signup calls
+│   │   │   └── recommendations.ts  # Fetching the daily AI feed
+│   │   ├── components/             # Reusable UI components
+│   │   │   ├── Navbar.tsx          # Navigation bar
+│   │   │   ├── Navbar.css          # Styles for Navbar
+│   │   │   ├── ContentCard.tsx     # The box for a Movie/Book
+│   │   │   └── ContentCard.css     # Styles for the Card
+│   │   ├── pages/                  # Full Screen Views
+│   │   │   ├── Home.tsx            # The Dynamic Dashboard
+│   │   │   ├── Onboarding.tsx      # Multi-step preference setup
+│   │   │   └── Login.tsx           # Entry screen
+│   │   ├── context/                # Global State
+│   │   │   └── AuthContext.tsx     # Tracks if user is logged in
+│   │   ├── App.tsx                 # Main Router (Page logic)
+│   │   ├── main.tsx                # Entry point (Imports CSS)
+│   │   └── index.css               # Global App styles
+│   ├── .env                        # Local variables (API URL)
+│   ├── package.json                # List of JS libraries
+│   └── tsconfig.json               # TypeScript configuration
+│
+├── backend/                        # FastAPI + AI logic
+│   ├── app/
+│   │   ├── main.py                 # The "Front Door" of your API
+│   │   ├── core/                   # System Settings
+│   │   │   ├── config.py           # Handles Environment Variables
+│   │   │   └── database.py         # Postgres Connection Logic
+│   │   ├── models/                 # PostgreSQL Table Blueprints
+│   │   │   ├── user.py             # User Table (Name, Email, Preferences)
+│   │   │   └── content.py          # Content Table (Title, Vector, Genre)
+│   │   ├── schemas/                # Data Validation (Pydantic)
+│   │   │   ├── user_schema.py      # Rules for User data
+│   │   │   └── content_schema.py   # Rules for Content data
+│   │   ├── routers/                # URL Path Handlers
+│   │   │   ├── auth_router.py      # /api/auth paths
+│   │   │   └── recs_router.py      # /api/recommendations paths
+│   │   ├── services/               # The "Logic" workers
+│   │   │   └── ai_engine.py        # Hybrid Recommendation math
+│   │   └── ml/                     # AI Models
+│   │       └── embedder.py         # Sentence Transformers logic
+│   ├── .env                        # DB Credentials & API Keys
+│   ├── requirements.txt            # Python Libraries (FastAPI, pgvector)
+│   └── schema.sql                  # The SQL to build your DB tables
+│
+└── README.md                       # Project instructions for the team
