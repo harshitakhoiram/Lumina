@@ -1,0 +1,7 @@
+PROPRIETARY AND CONFIDENTIAL
+
+Copyright (c) 2026 Harshita Khoiram & Athira Mohan
+
+All Rights Reserved.
+
+This source code and all related files are the exclusive property of Harshita Khoiram and Athira Mohan. This software is private and confidential. No part of this project may be copied, distributed, modified, or used without express written permission from the owners. Unauthorized access, use, or distribution is strictly prohibited.
