@@ -1,53 +1,62 @@
 ai-recommendation-engine/
 │
-├── frontend/                       # React + TypeScript (Vite)
-│   ├── public/                     # Static assets (no code here)
-│   │   ├── favicon.ico
-│   │   └── logo.png
-│   ├── src/
-│   │   ├── api/                    # Functions to call Render Backend
-│   │   │   ├── axiosInstance.ts    # Centralized API config
-│   │   │   ├── auth.ts             # Login/Signup calls
-│   │   │   └── recommendations.ts  # Fetching the daily AI feed
-│   │   ├── components/             # Reusable UI components
-│   │   │   ├── Navbar.tsx          # Navigation bar
-│   │   │   ├── Navbar.css          # Styles for Navbar
-│   │   │   ├── ContentCard.tsx     # The box for a Movie/Book
-│   │   │   └── ContentCard.css     # Styles for the Card
-│   │   ├── pages/                  # Full Screen Views
-│   │   │   ├── Home.tsx            # The Dynamic Dashboard
-│   │   │   ├── Onboarding.tsx      # Multi-step preference setup
-│   │   │   └── Login.tsx           # Entry screen
-│   │   ├── context/                # Global State
-│   │   │   └── AuthContext.tsx     # Tracks if user is logged in
-│   │   ├── App.tsx                 # Main Router (Page logic)
-│   │   ├── main.tsx                # Entry point (Imports CSS)
-│   │   └── index.css               # Global App styles
-│   ├── .env                        # Local variables (API URL)
-│   ├── package.json                # List of JS libraries
-│   └── tsconfig.json               # TypeScript configuration
+├── frontend/                       # The "Face" (HTML/CSS/JS)
+│   ├── index.html                  # Landing & Login Page
+│   ├── onboarding.html             # Multi-step preference setup
+│   ├── dashboard.html              # The Main App Interface
+│   ├── profile.html                # User settings & history
+│   │
+│   ├── assets/                     # Shared static files
+│   │   ├── css/
+│   │   │   ├── main.css            # Global colors, fonts, and layout
+│   │   │   ├── auth.css            # Styles for Login/Onboarding
+│   │   │   └── dashboard.css       # Styles for the recommendation grid
+│   │   ├── js/
+│   │   │   ├── auth.js             # Firebase Login/Signup logic
+│   │   │   ├── api.js              # Fetching data from your FastAPI
+│   │   │   ├── onboarding.js       # Handling the multi-step form
+│   │   │   └── dashboard.js        # Rendering movies/books on screen
+│   │   └── images/
+│   │       ├── logo.svg            # Your project logo
+│   │       └── default-avatar.png  # Fallback for user profiles
+│   │
+│   └── lib/                        # External libraries (if not using CDN)
+│       └── firebase-config.js      # Your Firebase keys & initialization
 │
-├── backend/                        # FastAPI + AI logic
+├── backend/                        # The "Brain" (FastAPI + AI)
 │   ├── app/
-│   │   ├── main.py                 # The "Front Door" of your API
-│   │   ├── core/                   # System Settings
-│   │   │   ├── config.py           # Handles Environment Variables
-│   │   │   └── database.py         # Postgres Connection Logic
-│   │   ├── models/                 # PostgreSQL Table Blueprints
-│   │   │   ├── user.py             # User Table (Name, Email, Preferences)
-│   │   │   └── content.py          # Content Table (Title, Vector, Genre)
-│   │   ├── schemas/                # Data Validation (Pydantic)
-│   │   │   ├── user_schema.py      # Rules for User data
-│   │   │   └── content_schema.py   # Rules for Content data
-│   │   ├── routers/                # URL Path Handlers
-│   │   │   ├── auth_router.py      # /api/auth paths
-│   │   │   └── recs_router.py      # /api/recommendations paths
-│   │   ├── services/               # The "Logic" workers
-│   │   │   └── ai_engine.py        # Hybrid Recommendation math
-│   │   └── ml/                     # AI Models
-│   │       └── embedder.py         # Sentence Transformers logic
-│   ├── .env                        # DB Credentials & API Keys
-│   ├── requirements.txt            # Python Libraries (FastAPI, pgvector)
-│   └── schema.sql                  # The SQL to build your DB tables
+│   │   ├── main.py                 # FastAPI Entry point (The server)
+│   │   │
+│   │   ├── core/                   # System Configurations
+│   │   │   ├── config.py           # Handles Environment Variables (.env)
+│   │   │   ├── database.py         # SQLAlchemy/PostgreSQL connection
+│   │   │   └── security.py         # Token verification logic
+│   │   │
+│   │   ├── models/                 # Database Table Blueprints
+│   │   │   ├── user.py             # User DB Table (Preferences, ID)
+│   │   │   ├── content.py          # Movies/Books DB Table (Title, Vector)
+│   │   │   └── interaction.py      # Likes/Ratings DB Table
+│   │   │
+│   │   ├── routers/                # URL Path Controllers
+│   │   │   ├── auth.py             # Paths like /api/login
+│   │   │   ├── recommendations.py  # Paths like /api/suggest
+│   │   │   └── search.py           # Paths like /api/query
+│   │   │
+│   │   ├── services/               # The "Heavy Lifting"
+│   │   │   ├── recommendation_service.py # Logic for cross-domain AI
+│   │   │   └── ingestion_service.py      # Pulling data from TMDB/Google Books
+│   │   │
+│   │   └── ml/                     # The AI Lab
+│   │       ├── embedder.py         # Converts text to vectors (HuggingFace)
+│   │       └── similarity.py       # Cosine similarity math
+│   │
+│   ├── requirements.txt            # Python dependencies (FastAPI, pgvector)
+│   ├── .env                        # Secret Keys (DO NOT commit to GitHub)
+│   └── schema.sql                  # Manual SQL for DB initialization
 │
-└── README.md                       # Project instructions for the team
+├── docs/                           # Project Documentation
+│   ├── api-endpoints.md            # List of all URLs your JS can call
+│   └── db-design.md                # Visual of how tables relate
+│
+├── .gitignore                      # Files Git should ignore
+└── COPYRIGHT.txt                   # Your "All Rights Reserved" text
