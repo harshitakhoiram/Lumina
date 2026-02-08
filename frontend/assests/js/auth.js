@@ -1,7 +1,7 @@
 
   function emailInputMessage() {
         var input = document.querySelector(".em-input").value;
-            var emailMessage = document.querySelector(".email-message");
+        var emailMessage = document.querySelector(".email-message");
         var pattern = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
     const list = document.querySelector(".em-input").classList;
 
@@ -21,7 +21,7 @@
             
         } 
       
-    }
+    }   
  
      //======================================================================================
 
@@ -49,6 +49,10 @@
         } 
       
     }
+
+    // Inside your login function in auth.js
+const data = await response.json();
+localStorage.setItem('access_token', data.token); // Your "Digital Ticket"
   
 //======================================================================================
     const accordionItem = document.querySelectorAll(".accordion-item");

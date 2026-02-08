@@ -38,3 +38,7 @@ async function loadDailyRecommendations() {
 
 // Call the function when page loads
 loadDailyRecommendations();
+
+//the loadDailyRecommendations() function waits for your FastAPI backend to send a list of movies.
+// For every movie the database finds, the JavaScript automatically creates a new image and puts it inside the slider. 
+// If your DB has 5 movies today, you'll see 5. If it has 20 tomorrow, the slider will simply grow longer and let you swipe more.
