@@ -1,10 +1,13 @@
 from fastapi import FastAPI
-from app.routers import auth
+from app.routers import auth_router
 
-app = FastAPI()
+app = FastAPI(title="Lumina API")
 
-# Include the auth routes
-app.include_router(auth.router)
+app.include_router(auth_router.router)
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
 
 @app.get("/")
 def read_root():

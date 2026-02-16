@@ -10,6 +10,9 @@ router = APIRouter(
     prefix="/auth",
     tags=["Authentication"]
 )
+@router.get("/ping")
+def ping():
+    return {"ok": True}
 
 # --- SIGNUP ROUTE ---
 @router.post("/signup", status_code=status.HTTP_201_CREATED)
