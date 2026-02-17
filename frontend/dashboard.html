@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <title>Netflix</title>
+  <title>Lumina</title>
   <link rel="stylesheet" href="/frontend/assests/css/dashboard.css">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <script defer src="https://use.fontawesome.com/releases/v5.1.0/js/all.js" integrity="sha384-3LK/3kTpDE/Pkp8gTNp2gR/2gOiwQ6QaO7Td0zV76UFJVhqLl4Vl3KL1We6q6wR9" crossorigin="anonymous"></script>
@@ -15,23 +15,27 @@
   <div class="wrapper">
 
     <!-- HEADER -->
-    <header>
-      <div class="netflixLogo">
-        <a id="logo" href="#home"><img src="/frontend/assests/LuminaLogo.png" alt="Logo Image"></a>
-      </div>
-      <nav class="main-nav">
-        <a href="#home">Home</a>
-        <a href="#tvShows">Recommendation</a>
-        <a href="#movies">You might like</a>
-        <a href="#originals">Originals</a>
-        <a href="#">Recently Added</a>
-      </nav>
-      <nav class="sub-nav">
-        <a href="#"><i class="fas fa-search sub-nav-logo"></i></a>
-        <a href="#"><i class="fas fa-bell sub-nav-logo"></i></a>
-        <a href="#">Account</a>
-      </nav>
-    </header>
+    <header class="main-header">
+  <div class="logo-box">
+    <a href="#home">
+      <img src="/frontend/assests/LuminaLogo.png" alt="Lumina Logo" class="lumina-logo">
+    </a>
+  </div>
+  
+  <div class="search-section">
+    <div class="search-wrapper">
+      <i class="fas fa-search"></i>
+      <input type="text" placeholder="movies like..." id="global-search">
+    </div>
+  </div>
+
+  <div class="user-section">
+    <span class="account-text">My Account</span>
+    <div class="profile-circle">
+        <i class="fas fa-user"></i>
+    </div>
+  </div>
+</header>
     <!-- END OF HEADER -->
 
     <!-- MAIN CONTAINER -->
@@ -47,7 +51,7 @@
         </div>
     </div>
 
-      <h1 id="myList">Trending Now</h1>
+      <h1 id="myList">Since you liked </h1>
       <div class="box">
         <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/t1.PNG?raw=true" alt=""></a>
         <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/t2.PNG?raw=true" alt=""></a>
@@ -57,7 +61,7 @@
         <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/t6.PNG?raw=true" alt=""></a>
       </div>
 
-      <h1 id="tvShows">TV Shows</h1>
+      <h1 id="tvShows">Since you like </h1>
       <div class="box">
         <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/tv1.PNG?raw=true" alt=""></a>
         <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/tv2.PNG?raw=true" alt=""></a>
@@ -74,7 +78,7 @@
         <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/tv12.PNG?raw=true" alt=""></a>
       </div>
 
-      <h1 id="movies">Blockbuster Action & Adventure</h1>
+      <h1 id="movies">We think you'll like this</h1>
       <div class="box">
         <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/m1.PNG?raw=true" alt=""></a>
         <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/m2.PNG?raw=true" alt=""></a>
@@ -84,27 +88,18 @@
         <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/m6.PNG?raw=true" alt=""></a>
       </div>
 
-      <h1 id="originals">Netflix Originals</h1>
-      <div class="box">
-        <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/o1.PNG?raw=true" alt=""></a>
-        <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/o2.PNG?raw=true" alt=""></a>
-        <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/o3.PNG?raw=true" alt=""></a>
-        <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/o4.PNG?raw=true" alt=""></a>
-        <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/o5.PNG?raw=true" alt=""></a>
-        <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/o6.PNG?raw=true" alt=""></a>
-      </div>
-
       <!-- END OF MAIN CONTAINER -->
 
       <!-- LINKS -->
-      <section class="link">
+      <!--<section class="link">
         <div class="logos">
           <a href="#"><i class="fab fa-facebook-square fa-2x logo"></i></a>
           <a href="#"><i class="fab fa-instagram fa-2x logo"></i></a>
           <a href="#"><i class="fab fa-twitter fa-2x logo"></i></a>
           <a href="#"><i class="fab fa-youtube fa-2x logo"></i></a>
-        </div>
+        </div>>-->
         <div class="sub-links">
+          <br>
           <ul>
             <li><a href="#">Audio and Subtitles</a></li>
             <li><a href="#">Audio Description</a></li>
@@ -125,8 +120,8 @@
 
       <!-- FOOTER -->
       <footer>
-        <p>&copy 1997-2018 Netflix, Inc.</p>
-        <p>Carlos Avila &copy 2018</p>
+        <p></p>
+        <p>Harshita & Athira &copy 2026</p>
       </footer>
   </div>
 </body>

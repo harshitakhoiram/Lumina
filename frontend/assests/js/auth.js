@@ -1,72 +1,71 @@
+/**
+ * Lumina Landing Page Logic
+ * Targets: index.html
+ */
 
-  function emailInputMessage() {
-        var input = document.querySelector(".em-input").value;
-        var emailMessage = document.querySelector(".email-message");
-        var pattern = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
-    const list = document.querySelector(".em-input").classList;
+document.addEventListener("DOMContentLoaded", () => {
+    // --- 1. FAQ ACCORDION LOGIC ---
+    const accordionItems = document.querySelectorAll(".accordion-item");
 
-    if (input.match(pattern)) {
-        emailMessage.innerHTML= " ";
-        list.remove("error");
-    }   
+    accordionItems.forEach((item) => {
+        const header = item.querySelector(".faq-header");
+        
+        if (header) {
+            header.addEventListener("click", () => {
+                const isActive = item.classList.contains("active");
 
-    else if (input.length <= 5) {
-        emailMessage.innerHTML="Email is required!";
-        list.add("error");
-    }
-    
-        else{
-            emailMessage.innerHTML="Please enter a valid email address.";
-            list.add("error");
-            
-        } 
-      
-    }   
- 
-     //======================================================================================
+                // Close all other items first
+                accordionItems.forEach((el) => {
+                    el.classList.remove("active");
+                    const content = el.querySelector(".paragraph"); // Simplified selector
+                    if (content) content.style.maxHeight = null;
+                });
 
-    function emailFaqInputMessage() {
-   
-        var input = document.querySelector(".em-input-faq").value;
-            var emailMessage = document.querySelector(".email-message-faq");
-        var pattern = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
-    const list = document.querySelector(".em-input-faq").classList;
-
-    if (input.match(pattern)) {
-        emailMessage.innerHTML= " ";
-        list.remove("error");
-    }   
-
-    else if (input.length <= 5) {
-        emailMessage.innerHTML="Email is required!";
-        list.add("error");
-    }
-    
-        else{
-            emailMessage.innerHTML="Please enter a valid email address.";
-            list.add("error");
-            
-        } 
-      
-    }
-
-    // Inside your login function in auth.js
-const data = await response.json();
-localStorage.setItem('access_token', data.token); // Your "Digital Ticket"
-  
-//======================================================================================
-    const accordionItem = document.querySelectorAll(".accordion-item");
-       
-    accordionItem.forEach((el) =>
-    
-      el.addEventListener("click", () => {  
-        if (el.classList.contains("faq-active")) {
-          el.classList.remove("faq-active");
-        } else {
-          accordionItem.forEach((el) => el.classList.remove("faq-active"));
-          el.classList.add("faq-active");
+                // Open the clicked item
+                if (!isActive) {
+                    item.classList.add("active");
+                    const content = item.querySelector(".paragraph");
+                    if (content) {
+                        content.style.maxHeight = content.scrollHeight + "px";
+                    }
+                }
+            });
         }
-      })
-    );
+    });
 
-    //======================================================================================
+    // --- 2. FORM SUBMISSION ---
+    const emailForms = document.querySelectorAll(".email");
+    emailForms.forEach(form => {
+        form.addEventListener("submit", (e) => {
+            e.preventDefault();
+            const input = form.querySelector("input");
+            if (input && !input.classList.contains("error")) {
+                console.log("Lumina: Proceeding with:", input.value);
+            }
+        });
+    });
+});
+
+// --- 3. VALIDATION FUNCTIONS ---
+// Helper to avoid repeating code
+function validateEmailField(inputClass, messageClass) {
+    const input = document.querySelector(inputClass);
+    const message = document.querySelector(messageClass);
+    const pattern = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
+
+    if (!input || !message) return;
+
+    if (pattern.test(input.value.trim())) {
+        message.innerHTML = " ";
+        input.classList.remove("error");
+    } else if (input.value.length === 0) {
+        message.innerHTML = "Email is required!";
+        input.classList.add("error");
+    } else {
+        message.innerHTML = "Please enter a valid email address.";
+        input.classList.add("error");
+    }
+}
+
+function emailInputMessage() { validateEmailField(".em-input", ".email-message"); }
+function emailFaqInputMessage() { validateEmailField(".em-input-faq", ".email-message-faq"); }
