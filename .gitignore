@@ -134,3 +134,27 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+# --- Python Specific ---
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+
+# --- Environment Secrets ---
+.env
+
+# --- Frontend / Node ---
+node_modules/
+dist/
+.npm/
+
+# --- Databases & Logs ---
+*.db
+*.sqlite3
+*.log
+
+# --- OS/IDE Junk ---
+.DS_Store
+Thumbs.db
+.vscode/
