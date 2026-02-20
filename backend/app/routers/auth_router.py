@@ -1,60 +1,58 @@
-# backend/app/routers/auth.py
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from app.core.database import get_db
-from app.models.user import User
-from app.schemas.user_schema import UserCreate, UserLogin, Token
-from app.core.auth_handler import get_password_hash, verify_password, create_access_token
+from sqlalchemy import text
+import uuid
 
-router = APIRouter(
-    prefix="/auth",
-    tags=["Authentication"]
-)
+from app.core.database import get_db
+from app.core.security import create_access_token
+from app.schemas.auth import SignupRequest, LoginRequest, AuthResponse
+
+router = APIRouter(prefix="/auth", tags=["Authentication"])
+
 @router.get("/ping")
 def ping():
     return {"ok": True}
 
-# --- SIGNUP ROUTE ---
-@router.post("/signup", status_code=status.HTTP_201_CREATED)
-def signup(user_data: UserCreate, db: Session = Depends(get_db)):
-    # 1. Check if user already exists
-    existing_user = db.query(User).filter(User.email == user_data.email).first()
-    if existing_user:
-        raise HTTPException(
-            status_code=400, 
-            detail="Email already registered"
-        )
-    
-    # 2. Hash the password and create user object
-    hashed_pwd = get_password_hash(user_data.password)
-    new_user = User(
-        email=user_data.email,
-        hashed_password=hashed_pwd,
-        full_name=user_data.full_name
-    )
-    
-    # 3. Save to PostgreSQL
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
-    
-    return {"message": "User created successfully"}
+@router.post("/signup", response_model=AuthResponse)
+def signup(body: SignupRequest, db: Session = Depends(get_db)):
+    # Check if email already exists
+    existing = db.execute(
+        text("SELECT id FROM users WHERE email = :email"),
+        {"email": body.email}
+    ).fetchone()
 
-# --- LOGIN ROUTE ---
-@router.post("/login", response_model=Token)
-def login(user_credentials: UserLogin, db: Session = Depends(get_db)):
-    # 1. Find user by email
-    user = db.query(User).filter(User.email == user_credentials.email).first()
-    
-    # 2. Verify existence and password
-    if not user or not verify_password(user_credentials.password, user.hashed_password):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    
-    # 3. Create the "Digital Ticket" (JWT Token)
-    access_token = create_access_token(data={"sub": user.email})
-    
-    return {"access_token": access_token, "token_type": "bearer"}
+    if existing:
+        raise HTTPException(status_code=400, detail="Email already registered")
+
+    user_id = str(uuid.uuid4())
+
+    # NOTE: For demo, we are NOT hashing passwords. Don't do this in real apps.
+    db.execute(
+        text("""
+            INSERT INTO users (id, name, email, created_at)
+            VALUES (:id, :name, :email, NOW())
+        """),
+        {"id": user_id, "name": body.name, "email": body.email}
+    )
+    db.commit()
+
+    token = create_access_token(user_id)
+    return AuthResponse(access_token=token, user_id=user_id)
+
+@router.post("/login", response_model=AuthResponse)
+def login(body: LoginRequest, db: Session = Depends(get_db)):
+    row = db.execute(
+        text("SELECT id FROM users WHERE email = :email"),
+        {"email": body.email}
+    ).fetchone()
+
+    if not row:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+
+    # For demo: accept any password OR enforce a fixed password like "pass123"
+    # If you want fixed:
+    # if body.password != "pass123": raise HTTPException(401, "Invalid credentials")
+
+    user_id = row[0]
+    token = create_access_token(user_id)
+    return AuthResponse(access_token=token, user_id=user_id)

@@ -1,22 +1,26 @@
-# backend/app/core/database.py
 import os
 from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, declarative_base
 from dotenv import load_dotenv
 
 load_dotenv()
 
-# This URL will come from your .env file eventually
-# Example: postgresql://user:password@localhost:5432/lumina_db
-SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL")
+DATABASE_URL = os.getenv("DATABASE_URL")
 
-engine = create_engine(SQLALCHEMY_DATABASE_URL)
+if not DATABASE_URL:
+    raise RuntimeError("DATABASE_URL is not set")
+
+# Render Postgres requires SSL. This makes SQLAlchemy include sslmode=require.
+connect_args = {}
+if DATABASE_URL.startswith("postgresql"):
+    connect_args = {"sslmode": "require"}
+
+engine = create_engine(DATABASE_URL, pool_pre_ping=True, connect_args=connect_args)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
 
-# This is the "Dependency" your router is looking for
+
 def get_db():
     db = SessionLocal()
     try:
