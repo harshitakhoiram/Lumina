@@ -9,10 +9,12 @@ from sqlalchemy import text
 from fastapi import Depends
 from sqlalchemy.orm import Session
 from app.core.database import get_db
+from app.routers import recommendations
 
 app = FastAPI(title="Lumina API")
 
 app.include_router(auth_router.router)
+app.include_router(recommendations.router)
 
 @app.get("/db-check")
 def db_check(db: Session = Depends(get_db)):
