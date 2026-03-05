@@ -31,6 +31,31 @@ Response:
 
 ---
 
+## User Profile
+
+### POST /auth/profile
+Auth: Required
+
+Request: (any of the onboarding fields)
+{
+  "fullName": "string",
+  "email": "string",
+  "interest": "video|books",
+  "language": "string",
+  "genre": "string",
+  "selectedTitles": ["string"],
+  "selectedActors": ["string"],
+  "favoriteContent": "string",
+  "finalConfirmation": true
+}
+
+Response:
+{
+  "status": "profile saved"
+}
+
+---
+
 ## Content Listing
 
 ### GET /content

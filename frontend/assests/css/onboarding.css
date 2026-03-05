@@ -1,0 +1,391 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: #000;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    font-family: Arial, Helvetica, sans-serif;
+    color: #fff;
+}
+
+/* main card container */
+.form-card {
+    max-width: 760px;
+    width: 100%;
+    background: #111;
+    border-radius: 16px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+    padding: 2.5rem;
+    border: 1px solid #222;
+    transition: all 0.3s ease;
+}
+
+        /* progress area – elegant minimalism */
+        .progress-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 2.2rem;
+            flex-wrap: wrap;
+            gap: 1rem 1.8rem;
+        }
+
+        .step-indicators {
+            display: flex;
+            gap: 0.3rem;
+            align-items: center;
+        }
+
+        .step-badge {
+            width: 48px;
+            height: 48px;
+            border-radius: 100px;
+            background: #f1ebe4;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 1.25rem;
+            font-family: 'Space Grotesk', sans-serif;
+            color: #3f5a44;
+            box-shadow: 0 2px 0 rgba(0,0,0,0.02);
+            transition: all 0.25s ease;
+            border: 2px solid #dad3c8;
+            background: #fffcf7;
+        }
+
+        .step-badge.active {
+            background: #2c4a3e;
+            border-color: #c9ad7a;
+            color: #f6edd8;
+            box-shadow: 0 15px 20px -10px #2b4a3d;
+            transform: scale(1.02);
+        }
+
+        .step-badge.completed {
+            background: #2c4a3e;
+            border-color: #b59b6b;
+            color: #eedbbc;
+        }
+
+        .step-badge i {
+            font-size: 1.1rem;
+            color: #f2e2c6;
+        }
+
+        .progress-track {
+            flex: 1;
+            height: 6px;
+            background: #e2d9ce;
+            border-radius: 10px;
+            max-width: 220px;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .progress-fill {
+            height: 6px;
+            width: 0%;
+            background: linear-gradient(90deg, #3f6a57, #6f8b72, #b7a26b);
+            border-radius: 10px;
+            transition: width 0.4s cubic-bezier(0.3, 0.8, 0.3, 1);
+            box-shadow: 0 0 8px #c2b28b;
+        }
+
+        /* typography: headings with Grotesk, body inter */
+
+.step-title {
+    font-size: 2rem;
+    font-weight: 600;
+    color: #ff751f;
+    margin-bottom: 0.25rem;
+    line-height: 1.2;
+}
+
+
+.step-caption {
+    font-size: 1rem;
+    color: #ccc;
+    margin-bottom: 2rem;
+    border-left: 4px solid #ff751f;
+    padding-left: 1rem;
+    font-style: italic;
+}
+
+        /* steps animation */
+        .form-step {
+            display: block;
+            animation: gentleAppear 0.4s ease;
+        }
+
+        @keyframes gentleAppear {
+            0% { opacity: 0.5; transform: translateY(6px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        .hidden-step {
+            display: none;
+        }
+
+        /* form fields – warm & crisp */
+        .input-group {
+            margin-bottom: 2rem;
+        }
+
+        label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #43664e;
+            display: block;
+            margin-bottom: 0.5rem;
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        .field-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+
+.field-wrapper i {
+    position: absolute;
+    left: 1rem;
+    font-size: 1.1rem;
+    color: #ff751f;
+    transition: color 0.2s;
+}
+
+
+input, select, textarea {
+    width: 100%;
+    background: #222;
+    border: 1px solid #333;
+    border-radius: 6px;
+    padding: 0.9rem 1.2rem 0.9rem 2.5rem;
+    font-size: 1rem;
+    color: #fff;
+    outline: none;
+    transition: all 0.2s;
+}
+
+        textarea {
+            border-radius: 30px;
+            padding: 1.2rem 1.8rem;
+            resize: vertical;
+            min-height: 130px;
+        }
+
+
+input:focus, select:focus, textarea:focus {
+    border-color: #ff751f;
+    background: #333;
+    box-shadow: 0 0 8px rgba(255,117,31,0.6);
+}
+
+        .field-wrapper:focus-within i {
+            color: #7b623e;
+        }
+
+        /* conditional branch – elegant card */
+        .conditional-group {
+            background: #f2ede3;
+            border-radius: 40px;
+            padding: 1.8rem 2.2rem;
+            margin: 2rem 0 1.5rem 0;
+            border: 1px solid #d8cbb8;
+            box-shadow: inset 0 2px 4px #fffcf5, 0 8px 12px -8px rgba(90, 70, 40, 0.2);
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+            flex-wrap: wrap;
+            margin: 1.2rem 0 0.2rem;
+        }
+
+        .radio-option {
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+            background: #fffcf5;
+            padding: 0.5rem 1.5rem 0.5rem 1rem;
+            border-radius: 100px;
+            border: 1px solid #cbbca3;
+            cursor: pointer;
+            transition: all 0.15s;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+        }
+
+        .radio-option input[type="radio"] {
+            width: auto;
+            margin: 0;
+            accent-color: #4e6b55;
+            transform: scale(1.1);
+        }
+
+        .radio-option:has(input:checked) {
+            background: #e4ddcf;
+            border-color: #9d8b6b;
+            box-shadow: 0 5px 9px -4px #9a865f;
+        }
+
+        .radio-option span {
+            font-weight: 500;
+            color: #234432;
+        }
+
+        /* hint / dynamic block */
+        .context-hint {
+            background: #eae2d4;
+            border-radius: 100px;
+            padding: 0.9rem 2rem;
+            margin: 1.8rem 0 0.5rem;
+            font-size: 0.98rem;
+            color: #335a41;
+            border: 1px solid #cbb386;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .context-hint i {
+            color: #9c8741;
+            font-size: 1.25rem;
+        }
+
+        /* navigation */
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 3rem;
+            gap: 1.2rem;
+        }
+
+
+button {
+    background: #ff751f;
+    border: none;
+    padding: 0.9rem 2.2rem;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 1rem;
+    color: #000;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    transition: 0.18s;
+}
+
+
+button.primary {
+    background: #ff751f;
+    color: #000;
+}
+
+        button.primary i {
+            color: #eedbbc;
+        }
+
+
+button:hover {
+    background: #e86000;
+    color: #fff;
+}
+
+button.primary:hover {
+    background: #e86000;
+}
+
+        button:active {
+            transform: translateY(1px);
+            box-shadow: 0 5px 8px rgba(70, 40, 20, 0.1);
+        }
+
+        button:disabled {
+            opacity: 0.3;
+            pointer-events: none;
+            filter: grayscale(0.6);
+        }
+
+
+.finish-message {
+    background: #222;
+    border-radius: 20px;
+    padding: 2.5rem 2rem;
+    text-align: center;
+    color: #fff;
+    border: 1px solid #333;
+}
+
+        .finish-message i {
+            font-size: 3rem;
+            color: #5b7a58;
+            margin-bottom: 1rem;
+        }
+
+        .finish-message h3 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 2rem;
+            font-weight: 500;
+            color: #1d3e2b;
+        }
+
+        /* small touches */
+
+.gold-accent {
+    color: #ff751f;
+}
+
+        @media (max-width: 520px) {
+            .form-card { padding: 1.8rem; }
+            .step-title { font-size: 1.9rem; }
+            .radio-group { gap: 0.8rem; }
+        }
+
+        /* grid of selectable items */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .selection-card {
+            background: #222;
+            border: 1px solid #444;
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #fff;
+            font-weight: 500;
+        }
+
+        .selection-card.selected {
+            background: #ff751f;
+            color: #000;
+            border-color: #ff751f;
+            transform: scale(1.05);
+        }
+
+        /* loading placeholder */
+        .placeholder {
+            grid-column: 1/-1;
+            text-align: center;
+            color: #aaa;
+            padding: 1.5rem;
+            font-style: italic;
+        }
+        

@@ -40,7 +40,11 @@ document.addEventListener("DOMContentLoaded", () => {
             e.preventDefault();
             const input = form.querySelector("input");
             if (input && !input.classList.contains("error")) {
-                console.log("Lumina: Proceeding with:", input.value);
+                const email = input.value.trim();
+                console.log("Lumina: get started with", email);
+                // store temporarily and navigate to onboarding
+                sessionStorage.setItem('onboardingEmail', email);
+                window.location.href = '/frontend/onboarding.html';
             }
         });
     });

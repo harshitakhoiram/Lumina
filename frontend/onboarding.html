@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Welcome to Lumina</title>
+    <script src="https://kit.fontawesome.com/e2bce648c2.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="assests/css/auth.css"> <!-- reuse auth styles for navbar -->
+    <link rel="stylesheet" href="assests/css/onboarding.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-container">          
+                <a class="logo" href="index.html"><img src="assests/LuminaLogo.png" alt="Lumina logo"></a>                                   
+            </div>
+        </div>
+    </nav>
+
+    <div class="form-card">
+      <!-- progress with rich palette -->
+      <div class="progress-header">
+        <div class="step-indicators">
+          <span class="step-badge active" id="step1Badge">1</span>
+          <span class="step-badge" id="step2Badge">2</span>
+          <span class="step-badge" id="step3Badge">3</span>
+          <span class="step-badge" id="step4Badge">4</span>
+          <span class="step-badge" id="step5Badge">5</span>
+          <span class="step-badge" id="step6Badge">6</span>
+          <span class="step-badge" id="step7Badge"><i class="fas fa-check"></i></span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="progressFill" style="width: 0%;"></div>
+        </div>
+      </div>
+
+  <!-- step 1 // warm welcome -->
+  <div id="step1" class="form-step">
+    <div class="step-title">Welcome to Lumina<span class="gold-accent"> ✦</span></div>
+    <div class="step-caption">step 1/5 – tell us who you are</div>
+
+    <div class="input-group">
+      <label>Full name</label>
+      <div class="field-wrapper">
+        <i class="fas fa-user"></i>
+        <input type="text" id="fullName" placeholder="e.g., Jane Doe">
+      </div>
+    </div>
+
+    <div class="input-group">
+      <label>Email address</label>
+      <div class="field-wrapper">
+        <i class="fas fa-envelope"></i>
+        <input type="email" id="email" placeholder="you@example.com">
+      </div>
+    </div>
+    <div class="input-group">
+      <label>Password</label>
+      <div class="field-wrapper">
+        <i class="fas fa-lock"></i>
+        <input type="password" id="password" placeholder="choose a password">
+      </div>
+    </div>
+  </div>
+
+  <!-- step 2 // select preferences -->
+  <div id="step2" class="form-step hidden-step">
+    <div class="step-title">Your Interests <span class="gold-accent">🎯</span></div>
+    <div class="step-caption">step 2/7 – what do you like most?</div>
+
+    <div class="input-group">
+      <label>Favorite content type</label>
+      <div class="field-wrapper">
+        <i class="fas fa-film"></i>
+        <select id="interestSelect">
+          <option value="video" selected>Movies & TV Shows</option>
+          <option value="books">Books</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- conditional genre block (video or books) -->
+    <div id="conditionalDevBlock" class="conditional-group hidden-step">
+      <label id="genreLabel" style="text-transform:none; font-weight:600; color:#ff751f;"><i class="fas fa-star"></i> favorite genre?</label>
+      <div class="radio-group" id="genreOptions">
+        <!-- options will be injected by JS -->
+      </div>
+      <p id="genreHint" style="font-size:0.85rem; margin-top:0.8rem; color:#aaa;"><i class="fas fa-info-circle"></i> appears when a type requiring genres is selected</p>
+    </div>
+  </div>
+
+  <!-- step 3 // language selection -->
+  <div id="step3" class="form-step hidden-step">
+    <div class="step-title">Preferred language <span class="gold-accent">💬</span></div>
+    <div class="step-caption" id="step3Caption">step 3/7 – which language do you watch/read in?</div>
+
+    <div class="radio-group" id="languageOptions">
+      <label class="radio-option"><input type="radio" name="language" value="en" checked> <span>English</span></label>
+      <label class="radio-option"><input type="radio" name="language" value="hi"> <span>Hindi</span></label>
+      <label class="radio-option"><input type="radio" name="language" value="es"> <span>Spanish</span></label>
+      <label class="radio-option"><input type="radio" name="language" value="fr"> <span>French</span></label>
+    </div>
+  </div>
+
+  <!-- step 4 // selection grid -->
+  <div id="step4" class="form-step hidden-step">
+    <div class="step-title">Pick your favorites <span class="gold-accent">🎬</span></div>
+    <div class="step-caption" id="step4Caption">step 4/7 – choose at least three</div>
+
+    <div class="grid-container" id="movieGrid"></div>
+    <p id="selectionHint" class="genreHint">Select 3 or more titles to continue.</p>
+  </div>
+
+  <!-- step 5 // actor/author selection -->
+  <div id="step5" class="form-step hidden-step">
+    <div class="step-title">Pick some stars <span class="gold-accent">🌟</span></div>
+    <div class="step-caption" id="step5Caption">step 5/7 – choose a few favorites</div>
+    <div class="grid-container" id="actorGrid"></div>
+    <p id="actorHint" class="genreHint">Select 2 or more to proceed.</p>
+  </div>
+
+  <!-- step 6 // review -->
+  <div id="step6" class="form-step hidden-step">
+    <div class="finish-message">
+      <i class="fas fa-check"></i>
+      <h3>Almost done!</h3>
+      <p style="font-size: 1rem;">We’ll use these choices to personalize your feed.</p>
+      <p style="margin-top: 1.5rem; font-size: 0.85rem; color:#aaa;">Just hit Next to finish.</p>
+    </div>
+  </div>
+
+  <!-- step 7 // final -->
+  <div id="step7" class="form-step hidden-step">
+    <div class="finish-message">
+      <i class="fas fa-check-circle"></i>
+      <h3>All set!</h3>
+      <p style="font-size: 1rem;">You're ready to explore Lumina.</p>
+      <p style="margin-top: 1.5rem; font-size: 0.85rem; color:#aaa;">You can always update preferences later in your profile.</p>
+    </div>
+  </div>
+
+  <!-- navigation -->
+  <div class="nav-buttons">
+    <button id="prevBtn" disabled><i class="fas fa-arrow-left"></i> back</button>
+    <button id="nextBtn" class="primary">next <i class="fas fa-arrow-right"></i></button>
+  </div>
+</div>
+
+<script src="assests/js/onboarding.js"></script>
+</body>
+</html>

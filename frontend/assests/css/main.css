@@ -1,0 +1,189 @@
+/* Global Styles */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: #0f0f0f;
+    color: #fff;
+    line-height: 1.6;
+}
+
+/* Navbar Styles */
+.navbar,
+.main-header {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    padding: 15px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.logo {
+    font-size: 1.8rem;
+    font-weight: bold;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.logo-box {
+    flex: 1;
+}
+
+.search-section {
+    flex: 2;
+    margin: 0 30px;
+}
+
+.search-wrapper {
+    display: flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 25px;
+    padding: 8px 15px;
+    transition: all 0.3s;
+}
+
+.search-wrapper:focus-within {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: #667eea;
+    box-shadow: 0 0 10px rgba(102, 126, 234, 0.3);
+}
+
+.search-wrapper i {
+    color: #999;
+    margin-right: 10px;
+}
+
+.search-wrapper input {
+    background: transparent;
+    border: none;
+    color: white;
+    outline: none;
+    width: 100%;
+    font-size: 0.95rem;
+}
+
+.search-wrapper input::placeholder {
+    color: #999;
+}
+
+.user-section {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.nav-btn-header {
+    background: #667eea;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s;
+}
+
+.nav-btn-header:hover {
+    background: #764ba2;
+    transform: translateY(-2px);
+}
+
+.account-text {
+    font-size: 0.9rem;
+    color: #ccc;
+}
+
+.profile-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.3s;
+}
+
+.profile-circle:hover {
+    transform: scale(1.1);
+}
+
+.profile-circle i {
+    color: white;
+    font-size: 1.2rem;
+}
+
+/* Buttons */
+.nav-btn {
+    background: transparent;
+    color: white;
+    border: 1px solid #667eea;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    margin: 0 5px;
+    transition: all 0.3s;
+}
+
+.nav-btn:hover {
+    background: #667eea;
+    transform: translateY(-2px);
+}
+
+.nav-btn.logout {
+    border-color: #e74c3c;
+    color: #e74c3c;
+}
+
+.nav-btn.logout:hover {
+    background: #e74c3c;
+    color: white;
+}
+
+/* Utility Classes */
+.hidden {
+    display: none !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .navbar,
+    .main-header {
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+
+    .search-section {
+        flex: 1;
+        margin: 0;
+        order: 3;
+        width: 100%;
+    }
+
+    .logo {
+        font-size: 1.4rem;
+    }
+
+    .user-section {
+        gap: 10px;
+    }
+
+    .account-text {
+        display: none;
+    }
+}

@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Content Details - Lumina</title>
+    <script src="https://kit.fontawesome.com/e2bce648c2.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="assests/css/auth.css">
+    <link rel="stylesheet" href="assests/css/detail.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-container">
+                <a class="logo" href="index.html"><img src="assests/LuminaLogo.png" alt="Lumina logo"></a>
+                <a href="dashboard.html" class="nav-link"><i class="fas fa-home"></i> Home</a>
+                <a href="search.html" class="nav-link"><i class="fas fa-search"></i> Search</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="detail-container">
+        <!-- Loading state -->
+        <div id="loadingState" class="loading-state">
+            <p><i class="fas fa-spinner fa-spin"></i> Loading...</p>
+        </div>
+
+        <!-- Content Detail -->
+        <div id="contentDetail" class="content-detail hidden">
+            <!-- Hero Section with Poster -->
+            <div class="hero-section">
+                <div class="hero-backdrop" id="backdropImage"></div>
+                <div class="hero-content">
+                    <img id="posterImage" class="poster" src="" alt="poster">
+                    <div class="info-section">
+                        <h1 id="contentTitle">Title</h1>
+                        <p id="contentType" class="content-type-badge">Movie</p>
+                        
+                        <div class="meta-info">
+                            <span id="rating" class="rating"><i class="fas fa-star"></i> 8.5/10</span>
+                            <span id="releaseDate" class="release-date">2024</span>
+                            <span id="runtime" class="runtime"><i class="fas fa-clock"></i> 120 min</span>
+                        </div>
+
+                        <div id="genres" class="genres"></div>
+
+                        <div class="action-buttons">
+                            <button id="likeBtn" class="action-btn like-btn">
+                                <i class="far fa-heart"></i> Like
+                            </button>
+                            <button id="bookmarkBtn" class="action-btn bookmark-btn">
+                                <i class="far fa-bookmark"></i> Bookmark
+                            </button>
+                            <button id="rateBtn" class="action-btn rate-btn">
+                                <i class="far fa-star"></i> Rate
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Overview -->
+            <div class="section">
+                <h2>Overview</h2>
+                <p id="overview" class="overview-text">No description available</p>
+            </div>
+
+            <!-- Cast & Crew -->
+            <div class="section">
+                <h2>Cast & Crew</h2>
+                <div class="cast-grid" id="castGrid"></div>
+            </div>
+
+            <!-- Director Info -->
+            <div id="directorSection" class="section hidden">
+                <h2>Director</h2>
+                <p id="director"></p>
+            </div>
+
+            <!-- Language & External Links -->
+            <div class="section">
+                <h2>Details</h2>
+                <div class="details-grid">
+                    <div class="detail-item">
+                        <label>Language</label>
+                        <p id="language">-</p>
+                    </div>
+                    <div class="detail-item">
+                        <label>Content Type</label>
+                        <p id="contentTypeDetail">-</p>
+                    </div>
+                    <div id="publisherSection" class="detail-item hidden">
+                        <label>Publisher</label>
+                        <p id="publisher">-</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- External Links -->
+            <div class="section">
+                <h2>Watch / Read</h2>
+                <div class="external-links">
+                    <a id="tmdbLink" href="#" target="_blank" class="external-btn tmdb-btn">
+                        <i class="fab fa-tmdb"></i> TMDB
+                    </a>
+                    <a id="imdbLink" href="#" target="_blank" class="external-btn imdb-btn hidden">
+                        <i class="fab fa-imdb"></i> IMDb
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Error state -->
+        <div id="errorState" class="error-state hidden">
+            <i class="fas fa-exclamation-circle"></i>
+            <h2>Oops! Content not found.</h2>
+            <p>We couldn't load the details for this content.</p>
+            <a href="search.html" class="back-btn">← Back to Search</a>
+        </div>
+    </div>
+
+    <!-- Rating Modal -->
+    <div id="ratingModal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>Rate This Content</h2>
+            <div class="star-rating" id="starRating">
+                <i class="far fa-star" data-rating="1"></i>
+                <i class="far fa-star" data-rating="2"></i>
+                <i class="far fa-star" data-rating="3"></i>
+                <i class="far fa-star" data-rating="4"></i>
+                <i class="far fa-star" data-rating="5"></i>
+                <i class="far fa-star" data-rating="6"></i>
+                <i class="far fa-star" data-rating="7"></i>
+                <i class="far fa-star" data-rating="8"></i>
+                <i class="far fa-star" data-rating="9"></i>
+                <i class="far fa-star" data-rating="10"></i>
+            </div>
+            <p id="ratingDisplay">Click to rate</p>
+            <button id="submitRatingBtn" class="submit-btn">Submit Rating</button>
+        </div>
+    </div>
+
+    <script src="assests/js/api.js"></script>
+    <script src="assests/js/detail.js"></script>
+</body>
+</html>

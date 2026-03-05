@@ -2,12 +2,14 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 import uuid
-
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from app.core.database import get_db
-from app.core.security import create_access_token
-from app.schemas.auth import SignupRequest, LoginRequest, AuthResponse
+from app.core.security import create_access_token, decode_token
+from app.schemas.auth import SignupRequest, LoginRequest, AuthResponse, ProfileRequest
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
+
+security = HTTPBearer()
 
 @router.get("/ping")
 def ping():
@@ -39,6 +41,14 @@ def signup(body: SignupRequest, db: Session = Depends(get_db)):
     token = create_access_token(user_id)
     return AuthResponse(access_token=token, user_id=user_id)
 
+
+@router.post("/profile")
+def save_profile(body: ProfileRequest, db: Session = Depends(get_db)):
+    """Store or log the user's onboarding preferences."""
+    print("profile payload:", body.dict())
+    # TODO: insert into a preferences table or update user row
+    return {"status": "profile saved"}
+
 @router.post("/login", response_model=AuthResponse)
 def login(body: LoginRequest, db: Session = Depends(get_db)):
     row = db.execute(
@@ -56,3 +66,24 @@ def login(body: LoginRequest, db: Session = Depends(get_db)):
     user_id = row[0]
     token = create_access_token(user_id)
     return AuthResponse(access_token=token, user_id=user_id)
+
+@router.get("/me")
+def get_me(
+    creds: HTTPAuthorizationCredentials = Depends(security), 
+    db: Session = Depends(get_db)
+):
+    """Fetch the profile of the currently logged-in user."""
+    token = creds.credentials
+    payload = decode_token(token)
+    user_id = payload.get("sub")
+
+    # Fetch user data from your PostgreSQL table
+    user = db.execute(
+        text("SELECT id, name, email FROM users WHERE id = :id"),
+        {"id": user_id}
+    ).fetchone()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    return dict(user._mapping)
