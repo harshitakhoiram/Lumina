@@ -8,6 +8,19 @@ CREATE TABLE IF NOT EXISTS users (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- USER PREFERENCES
+CREATE TABLE IF NOT EXISTS user_preferences (
+  user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  interest TEXT,
+  language TEXT,
+  genre TEXT,
+  selected_titles TEXT[],
+  selected_actors TEXT[],
+  favorite_content TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- CONTENT
 CREATE TABLE IF NOT EXISTS content (
   content_id TEXT PRIMARY KEY,

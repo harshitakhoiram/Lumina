@@ -5,8 +5,11 @@ from app.services.movie_service import movie_service
 from app.services.book_service import book_service
 from app.schemas.content_schema import InteractionRequest, InteractionResponse
 from app.core.database import get_db
+from app.core.security import decode_token
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 security = HTTPBearer()
+
+import uuid
 
 router = APIRouter(
     prefix="/discovery",
@@ -82,58 +85,10 @@ async def get_onboarding_items(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# --- UNIFIED CONTENT ENDPOINTS ---
-
-@router.get("/content")
-async def search_content(q: str = Query(..., min_length=1), type: str = Query(None, enum=["movie", "series", "book", None])):
-    """
-    Unified search across movies, series, and books.
-    Returns mixed results from TMDB (movies/series) and Google Books.
-    """
-    results = []
-    try:
-        if not type or type in ["movie", "series"]:
-            movie_results = await movie_service.search_movies(q)
-            if not isinstance(movie_results, dict) or "error" not in movie_results:
-                results.extend(movie_results if isinstance(movie_results, list) else [])
-        
-        if not type or type == "book":
-            book_results = await book_service.search_books(q)
-            if not isinstance(book_results, dict) or "error" not in book_results:
-                results.extend(book_results if isinstance(book_results, list) else [])
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Search error: {str(e)}")
-    
-    return {"items": results, "total": len(results)}
-
-@router.get("/content/{content_id}")
-async def get_content_detail(content_id: str, db: Session = Depends(get_db)):
-    """
-    Get detailed view of a specific movie/book (like IMDb page).
-    Fetches from external APIs and augments with local DB data.
-    """
-    try:
-        db_result = db.execute(
-            text("SELECT * FROM content WHERE content_id = :id"),
-            {"id": content_id}
-        ).fetchone()
-        
-        if db_result:
-            return dict(db_result._mapping)
-        
-        movie_detail = await movie_service.get_movie_detail(content_id)
-        if movie_detail and "error" not in movie_detail:
-            return movie_detail
-        
-        raise HTTPException(status_code=404, detail="Content not found")
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
 @router.post("/interactions")
 async def track_interaction(
     interaction: InteractionRequest,
+    creds: HTTPAuthorizationCredentials = Depends(security),
     db: Session = Depends(get_db)
 ):
     """
@@ -142,24 +97,30 @@ async def track_interaction(
     """
     try:
         print(f"Interaction: {interaction.action} on {interaction.content_id}")
-        if interaction.rating:
-            print(f"  Rating: {interaction.rating}")
-        if interaction.review_text:
-            print(f"  Review: {interaction.review_text}")
+        token = creds.credentials
+        payload = decode_token(token)
+        user_id = payload.get("sub")
+
+        if not user_id:
+            raise HTTPException(status_code=401, detail="Invalid token")
+
+        interaction_id = str(uuid.uuid4())
+        
+        db.execute(
+            text("""
+                INSERT INTO user_interactions (interaction_id, user_id, content_id, interaction_type, rating_value, created_at)
+                VALUES (:interaction_id, :user_id, :content_id, :interaction_type, :rating_value, NOW())
+            """),
+            {
+                "interaction_id": interaction_id,
+                "user_id": user_id,
+                "content_id": interaction.content_id,
+                "interaction_type": interaction.action,
+                "rating_value": interaction.rating
+            }
+        )
+        db.commit()
         
         return {"success": True, "message": f"Recorded {interaction.action} for content {interaction.content_id}"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    
-@router.get("/similar/{content_id}")
-def similar_recommendations(
-    content_id: str,
-    limit: int = Query(10, ge=1, le=50),
-    db: Session = Depends(get_db),
-    creds: HTTPAuthorizationCredentials = Depends(security) # <-- THIS LOCKS THE ROUTE
-):
-    # This line ensures the user is logged in before the SQL runs
-    rows = db.execute(SIMILAR_SQL, {"content_id": content_id, "limit": limit}).fetchall()
-    return {
-        "items": [dict(r._mapping) for r in rows]
-    }

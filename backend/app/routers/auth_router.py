@@ -43,10 +43,45 @@ def signup(body: SignupRequest, db: Session = Depends(get_db)):
 
 
 @router.post("/profile")
-def save_profile(body: ProfileRequest, db: Session = Depends(get_db)):
+def save_profile(
+    body: ProfileRequest,
+    creds: HTTPAuthorizationCredentials = Depends(security),
+    db: Session = Depends(get_db)
+):
     """Store or log the user's onboarding preferences."""
     print("profile payload:", body.dict())
-    # TODO: insert into a preferences table or update user row
+    token = creds.credentials
+    payload = decode_token(token)
+    user_id = payload.get("sub")
+
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+    db.execute(
+        text("""
+            INSERT INTO user_preferences (user_id, interest, language, genre, selected_titles, selected_actors, favorite_content, created_at, updated_at)
+            VALUES (:user_id, :interest, :language, :genre, :selected_titles, :selected_actors, :favorite_content, NOW(), NOW())
+            ON CONFLICT (user_id) DO UPDATE SET
+                interest = EXCLUDED.interest,
+                language = EXCLUDED.language,
+                genre = EXCLUDED.genre,
+                selected_titles = EXCLUDED.selected_titles,
+                selected_actors = EXCLUDED.selected_actors,
+                favorite_content = EXCLUDED.favorite_content,
+                updated_at = NOW()
+        """),
+        {
+            "user_id": user_id,
+            "interest": body.interest,
+            "language": body.language,
+            "genre": body.genre,
+            "selected_titles": body.selectedTitles,
+            "selected_actors": body.selectedActors,
+            "favorite_content": body.favoriteContent
+        }
+    )
+    db.commit()
+
     return {"status": "profile saved"}
 
 @router.post("/login", response_model=AuthResponse)
