@@ -5,10 +5,17 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <title>Lumina</title>
   <link rel="stylesheet" href="/frontend/assests/css/dashboard.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Outfit:wght@300;400;600;700&display=swap"
+    rel="stylesheet">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <script defer src="https://use.fontawesome.com/releases/v5.1.0/js/all.js" integrity="sha384-3LK/3kTpDE/Pkp8gTNp2gR/2gOiwQ6QaO7Td0zV76UFJVhqLl4Vl3KL1We6q6wR9" crossorigin="anonymous"></script>
+  <script defer src="https://use.fontawesome.com/releases/v5.1.0/js/all.js"
+    integrity="sha384-3LK/3kTpDE/Pkp8gTNp2gR/2gOiwQ6QaO7Td0zV76UFJVhqLl4Vl3KL1We6q6wR9"
+    crossorigin="anonymous"></script>
 
-  <script src="assests/js/dashboard.js"></script>
+  <script defer src="assests/js/dashboard.js"></script>
 </head>
 
 <body>
@@ -16,27 +23,27 @@
 
     <!-- HEADER -->
     <header class="main-header">
-  <div class="logo-box">
-    <a href="#home">
-      <img src="/frontend/assests/LuminaLogo.png" alt="Lumina Logo" class="lumina-logo">
-    </a>
-  </div>
-  
-  <div class="search-section">
-    <div class="search-wrapper">
-      <i class="fas fa-search"></i>
-      <input type="text" placeholder="Search movies, series, books..." id="global-search">
-    </div>
-  </div>
+      <div class="logo-box">
+        <a href="#home">
+          <img src="/frontend/assests/LuminaLogo.png" alt="Lumina Logo" class="lumina-logo">
+        </a>
+      </div>
 
-  <div class="user-section">
-    <button id="searchPageBtn" class="nav-btn-header" title="Advanced Search">🔍 Search</button>
-    <span class="account-text">My Account</span>
-    <div class="profile-circle" id="profileBtn">
-        <i class="fas fa-user"></i>
-    </div>
-  </div>
-</header>
+      <div class="search-section">
+        <div class="search-wrapper">
+          <i class="fas fa-search"></i>
+          <input type="text" placeholder="Search movies, series, books..." id="global-search">
+        </div>
+      </div>
+
+      <div class="user-section">
+        <button id="searchPageBtn" class="nav-btn-header" title="Advanced Search">🔍 Search</button>
+        <span class="account-text">My Account</span>
+        <div class="profile-circle" id="profileBtn">
+          <i class="fas fa-user"></i>
+        </div>
+      </div>
+    </header>
     <!-- END OF HEADER -->
 
     <!-- MAIN CONTAINER -->
@@ -44,49 +51,27 @@
       <div class="location" id="home">
         <h1>Recommendations of the Day</h1>
         <div class="slider-wrapper">
-            <button class="slider-arrow prev" id="prevBtn">&#10094;</button>
-            <div class="slider-box" id="daily-recommendations">
-                <p class="loading">Finding the perfect matches for you...</p>
-            </div>
-            <button class="slider-arrow next" id="nextBtn">&#10095;</button>
+          <button class="slider-arrow prev" id="prevBtn">&#10094;</button>
+          <div class="slider-box" id="daily-recommendations">
+            <p class="loading">Finding the perfect matches for you...</p>
+          </div>
+          <button class="slider-arrow next" id="nextBtn">&#10095;</button>
         </div>
-    </div>
-
-      <h1 id="myList">Since you liked </h1>
-      <div class="box">
-        <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/t1.PNG?raw=true" alt=""></a>
-        <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/t2.PNG?raw=true" alt=""></a>
-        <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/t3.PNG?raw=true" alt=""></a>
-        <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/t4.PNG?raw=true" alt=""></a>
-        <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/t5.PNG?raw=true" alt=""></a>
-        <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/t6.PNG?raw=true" alt=""></a>
       </div>
 
-      <h1 id="tvShows">Since you like </h1>
-      <div class="box">
-        <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/tv1.PNG?raw=true" alt=""></a>
-        <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/tv2.PNG?raw=true" alt=""></a>
-        <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/tv3.PNG?raw=true" alt=""></a>
-        <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/tv4.PNG?raw=true" alt=""></a>
-        <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/tv5.PNG?raw=true" alt=""></a>
-        <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/tv6.PNG?raw=true" alt=""></a>
-
-        <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/tv7.PNG?raw=true" alt=""></a>
-        <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/tv8.PNG?raw=true" alt=""></a>
-        <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/tv9.PNG?raw=true" alt=""></a>
-        <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/tv10.PNG?raw=true" alt=""></a>
-        <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/tv11.PNG?raw=true" alt=""></a>
-        <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/tv12.PNG?raw=true" alt=""></a>
+      <h1 id="header-genre">Since you liked</h1>
+      <div class="box" id="container-genre">
+        <!-- JS will inject items here -->
       </div>
 
-      <h1 id="movies">We think you'll like this</h1>
-      <div class="box">
-        <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/m1.PNG?raw=true" alt=""></a>
-        <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/m2.PNG?raw=true" alt=""></a>
-        <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/m3.PNG?raw=true" alt=""></a>
-        <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/m4.PNG?raw=true" alt=""></a>
-        <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/m5.PNG?raw=true" alt=""></a>
-        <a href=""><img src="https://github.com/carlosavilae/Netflix-Clone/blob/master/img/m6.PNG?raw=true" alt=""></a>
+      <h1 id="header-interest">Since you like</h1>
+      <div class="box" id="container-interest">
+        <!-- JS will inject items here -->
+      </div>
+
+      <h1 id="header-global">We think you'll like this</h1>
+      <div class="box" id="container-global">
+        <!-- JS will inject items here -->
       </div>
 
       <!-- END OF MAIN CONTAINER -->
@@ -99,31 +84,31 @@
           <a href="#"><i class="fab fa-twitter fa-2x logo"></i></a>
           <a href="#"><i class="fab fa-youtube fa-2x logo"></i></a>
         </div>>-->
-        <div class="sub-links">
-          <br>
-          <ul>
-            <li><a href="#">Audio and Subtitles</a></li>
-            <li><a href="#">Audio Description</a></li>
-            <li><a href="#">Help Center</a></li>
-            <li><a href="#">Gift Cards</a></li>
-            <li><a href="#">Media Center</a></li>
-            <li><a href="#">Investor Relations</a></li>
-            <li><a href="#">Jobs</a></li>
-            <li><a href="#">Terms of Use</a></li>
-            <li><a href="#">Privacy</a></li>
-            <li><a href="#">Legal Notices</a></li>
-            <li><a href="#">Corporate Information</a></li>
-            <li><a href="#">Contact Us</a></li>
-          </ul>
-        </div>
-      </section>
-      <!-- END OF LINKS -->
+      <div class="sub-links">
+        <br>
+        <ul>
+          <li><a href="#">Audio and Subtitles</a></li>
+          <li><a href="#">Audio Description</a></li>
+          <li><a href="#">Help Center</a></li>
+          <li><a href="#">Gift Cards</a></li>
+          <li><a href="#">Media Center</a></li>
+          <li><a href="#">Investor Relations</a></li>
+          <li><a href="#">Jobs</a></li>
+          <li><a href="#">Terms of Use</a></li>
+          <li><a href="#">Privacy</a></li>
+          <li><a href="#">Legal Notices</a></li>
+          <li><a href="#">Corporate Information</a></li>
+          <li><a href="#">Contact Us</a></li>
+        </ul>
+      </div>
+    </section>
+    <!-- END OF LINKS -->
 
-      <!-- FOOTER -->
-      <footer>
-        <p></p>
-        <p>Harshita & Athira &copy 2026</p>
-      </footer>
+    <!-- FOOTER -->
+    <footer>
+      <p></p>
+      <p>Harshita & Athira &copy 2026</p>
+    </footer>
   </div>
 </body>
 

@@ -38,35 +38,49 @@ if (globalSearch) {
     });
 }
 
-// 1. Slider Navigation
-const slider = document.getElementById("daily-recommendations");
-const nextBtn = document.getElementById("nextBtn");
-const prevBtn = document.getElementById("prevBtn");
+// 1. Slider & Navigation Re-selection
+let slider, nextBtn, prevBtn;
 
-if (nextBtn && prevBtn && slider) {
-    const scrollAmount = 320;
+function initSlider() {
+    slider = document.getElementById("daily-recommendations");
+    nextBtn = document.getElementById("nextBtn");
+    prevBtn = document.getElementById("prevBtn");
 
-    nextBtn.addEventListener("click", () => {
-        slider.scrollBy({ left: scrollAmount, behavior: "smooth" });
-    });
-
-    prevBtn.addEventListener("click", () => {
-        slider.scrollBy({ left: -scrollAmount, behavior: "smooth" });
-    });
+    if (nextBtn && prevBtn && slider) {
+        const scrollAmount = 270; // Tile width (240) + partial gap (30)
+        nextBtn.addEventListener("click", () => {
+            slider.scrollBy({ left: scrollAmount, behavior: "smooth" });
+        });
+        prevBtn.addEventListener("click", () => {
+            slider.scrollBy({ left: -scrollAmount, behavior: "smooth" });
+        });
+    }
 }
 
 // 2. Load Daily Recommendations
 async function loadDailyRecommendations() {
     try {
-        const response = await fetch(`${API_BASE_URL}/recommendations`, {
+        const response = await fetch(`${API_BASE_URL}/recommendations/personalized`, {
             headers: { Authorization: `Bearer ${currentToken}` },
         });
 
         if (response.ok) {
             const data = await response.json();
-            displayRecommendations(data.items || []);
+
+            // Render Slider
+            displayRecommendations(data.slider || [], slider);
+
+            // Render Rows
+            renderSection("container-genre", data.genre_highlights || []);
+            renderSection("container-interest", data.interest_trending || []);
+            renderSection("container-global", data.global_top || []);
+
+            // Update Headings
+            const genreHeader = document.getElementById("header-genre");
+            if (genreHeader && data.genre_name) {
+                genreHeader.innerHTML = `Since you liked <span class="gold-accent">${data.genre_name}</span>`;
+            }
         } else {
-            // Fallback: fetch trending movies
             fetchTrendingMovies();
         }
     } catch (error) {
@@ -84,21 +98,27 @@ async function fetchTrendingMovies() {
 
         if (response.ok) {
             const movies = await response.json();
-            displayRecommendations(movies);
+            displayRecommendations(movies, slider);
         }
     } catch (error) {
         console.error("Error fetching trending movies:", error);
     }
 }
 
-function displayRecommendations(items) {
-    if (!slider) return;
+function renderSection(containerId, items) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    displayRecommendations(items, container);
+}
 
-    slider.innerHTML = "";
+function displayRecommendations(items, targetContainer) {
+    if (!targetContainer) return;
+
+    targetContainer.innerHTML = "";
 
     if (items.length === 0) {
-        slider.innerHTML =
-            '<p class="loading">Start searching to get personalized recommendations!</p>';
+        targetContainer.innerHTML =
+            '<p class="loading">No matches found for this category.</p>';
         return;
     }
 
@@ -108,7 +128,7 @@ function displayRecommendations(items) {
         anchor.className = "rec-link";
 
         const img = document.createElement("img");
-        img.src = item.image || item.poster_url || "https://via.placeholder.com/300x450";
+        img.src = item.poster_url || item.image || "https://via.placeholder.com/300x450";
         img.alt = item.title || "Content";
         img.loading = "lazy";
 
@@ -119,12 +139,15 @@ function displayRecommendations(items) {
             window.location.href = "search.html";
         });
 
-        slider.appendChild(anchor);
+        targetContainer.appendChild(anchor);
     });
 }
 
 // Load recommendations on page load
-loadDailyRecommendations();
+document.addEventListener("DOMContentLoaded", () => {
+    initSlider();
+    loadDailyRecommendations();
+});
 
 // Refresh recommendations every 5 minutes
 setInterval(loadDailyRecommendations, 5 * 60 * 1000);

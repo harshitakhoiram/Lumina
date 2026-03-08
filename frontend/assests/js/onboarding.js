@@ -37,35 +37,35 @@
 
   // genre definitions
   const videoGenres = [
-    {value:'action',label:'Action'},
-    {value:'drama',label:'Drama'},
-    {value:'comedy',label:'Comedy'},
-    {value:'sci-fi',label:'Sci‑Fi'}
+    { value: 'action', label: 'Action' },
+    { value: 'drama', label: 'Drama' },
+    { value: 'comedy', label: 'Comedy' },
+    { value: 'sci-fi', label: 'Sci‑Fi' }
   ];
   const bookGenres = [
-    {value:'fiction',label:'Fiction'},
-    {value:'nonfiction',label:'Non‑fiction'},
-    {value:'mystery',label:'Mystery'},
-    {value:'fantasy',label:'Fantasy'}
+    { value: 'fiction', label: 'Fiction' },
+    { value: 'nonfiction', label: 'Non‑fiction' },
+    { value: 'mystery', label: 'Mystery' },
+    { value: 'fantasy', label: 'Fantasy' }
   ];
   let genreRadios = [];
 
   // movie/book data sample
   let selectedLanguage = 'en';
   // placeholder actor data (would come from API based on previous selections)
-  const sampleActors = ['Robert Downey Jr.','Scarlett Johansson','Leonardo DiCaprio','Meryl Streep','Denzel Washington'];
+  const sampleActors = ['Robert Downey Jr.', 'Scarlett Johansson', 'Leonardo DiCaprio', 'Meryl Streep', 'Denzel Washington'];
   const sampleItems = {
     video: {
-      action: ['Die Hard','Mad Max','John Wick','The Matrix','Gladiator'],
-      drama: ['Forrest Gump','The Shawshank Redemption','Moonlight','No Country for Old Men','The Godfather'],
-      comedy: ['Superbad','Step Brothers','The Big Lebowski','Groundhog Day','Anchorman'],
-      'sci-fi': ['Inception','Interstellar','Blade Runner','Arrival','Ex Machina']
+      action: ['Die Hard', 'Mad Max', 'John Wick', 'The Matrix', 'Gladiator'],
+      drama: ['Forrest Gump', 'The Shawshank Redemption', 'Moonlight', 'No Country for Old Men', 'The Godfather'],
+      comedy: ['Superbad', 'Step Brothers', 'The Big Lebowski', 'Groundhog Day', 'Anchorman'],
+      'sci-fi': ['Inception', 'Interstellar', 'Blade Runner', 'Arrival', 'Ex Machina']
     },
     books: {
-      fiction: ['1984','Pride and Prejudice','The Great Gatsby','To Kill a Mockingbird','The Hobbit'],
-      nonfiction: ['Sapiens','Educated','Becoming','The Wright Brothers','The Immortal Life of Henrietta Lacks'],
-      mystery: ['Gone Girl','The Girl with the Dragon Tattoo','Sherlock Holmes','Big Little Lies','In the Woods'],
-      fantasy: ['Harry Potter','The Name of the Wind','The Way of Kings','Mistborn','The Lies of Locke Lamora']
+      fiction: ['1984', 'Pride and Prejudice', 'The Great Gatsby', 'To Kill a Mockingbird', 'The Hobbit'],
+      nonfiction: ['Sapiens', 'Educated', 'Becoming', 'The Wright Brothers', 'The Immortal Life of Henrietta Lacks'],
+      mystery: ['Gone Girl', 'The Girl with the Dragon Tattoo', 'Sherlock Holmes', 'Big Little Lies', 'In the Woods'],
+      fantasy: ['Harry Potter', 'The Name of the Wind', 'The Way of Kings', 'Mistborn', 'The Lies of Locke Lamora']
     }
   };
 
@@ -117,56 +117,59 @@
     userPrefs.selectedActors = Array.from(selectedItems); // Capture Step 5 selections
 
     try {
-        const API_BASE = window.location.hostname === "127.0.0.1" ? "http://127.0.0.1:8000" : "https://your-backend.onrender.com";
+      const API_BASE = (window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost") ? "http://localhost:8000" : "https://your-backend.onrender.com";
 
-        // Step A: Sign up the user
-        const signupResp = await fetch(`${API_BASE}/auth/signup`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                name: userPrefs.fullName,
-                email: userPrefs.email,
-                password: userPrefs.password
-            })
-        });
+      // Step A: Sign up the user
+      const signupResp = await fetch(`${API_BASE}/auth/signup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: userPrefs.fullName,
+          email: userPrefs.email,
+          password: userPrefs.password
+        })
+      });
 
-        if (!signupResp.ok) throw new Error("Signup failed. Check if email exists.");
+      if (!signupResp.ok) throw new Error("Signup failed. Check if email exists.");
 
-        const signupData = await signupResp.json();
-        const token = signupData.access_token;
-        localStorage.setItem('access_token', token);
+      const signupData = await signupResp.json();
+      const token = signupData.access_token;
+      const userId = signupData.user_id;
 
-        // Step B: Save the complete profile (preferences)
-        const profilePayload = {
-            interest: userPrefs.interest,
-            language: userPrefs.language,
-            genre: userPrefs.genre,
-            selectedTitles: userPrefs.selectedTitles, // Step 4 movies/books
-            selectedActors: userPrefs.selectedActors, // Step 5 stars/authors
-            favoriteContent: userPrefs.selectedTitles[0] || null // Default to first pick
-        };
+      localStorage.setItem('access_token', token);
+      localStorage.setItem('user_id', userId);
 
-        const profileResp = await fetch(`${API_BASE}/auth/profile`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify(profilePayload)
-        });
+      // Step B: Save the complete profile (preferences)
+      const profilePayload = {
+        interest: userPrefs.interest,
+        language: userPrefs.language,
+        genre: userPrefs.genre,
+        selectedTitles: userPrefs.selectedTitles, // Step 4 movies/books
+        selectedActors: userPrefs.selectedActors, // Step 5 stars/authors
+        favoriteContent: userPrefs.selectedTitles[0] || null // Default to first pick
+      };
 
-        if (profileResp.ok) {
-            console.log('Onboarding complete!');
-            // Redirect to dashboard (relative path)
-            window.location.href = 'dashboard.html'; 
-        } else {
-            alert('Error saving your preferences. Please try again.');
-        }
+      const profileResp = await fetch(`${API_BASE}/auth/profile`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(profilePayload)
+      });
+
+      if (profileResp.ok) {
+        console.log('Onboarding complete!');
+        // Redirect to dashboard (relative path)
+        window.location.href = 'dashboard.html';
+      } else {
+        alert('Error saving your preferences. Please try again.');
+      }
     } catch (err) {
-        console.error('Final Step Error:', err);
-        alert('An error occurred during finish. Check the console.');
+      console.error('Final Step Error:', err);
+      alert('An error occurred during finish. Check the console.');
     }
-}
+  }
   // step change
   function showStep(step) {
     steps.forEach((s, idx) => {
@@ -226,7 +229,7 @@
       const label = document.createElement('label');
       label.className = 'radio-option';
       label.innerHTML = `
-        <input type="radio" name="genre" value="${g.value}" ${idx===0?'checked':''}> <span>${g.label}</span>
+        <input type="radio" name="genre" value="${g.value}" ${idx === 0 ? 'checked' : ''}> <span>${g.label}</span>
       `;
       genreContainer.appendChild(label);
     });
@@ -249,22 +252,22 @@
 
     // render appropriate genres
     if (genreContainer.innerHTML.trim() === "" || userPrefs.interest !== interest) {
-        if (interest === 'video') {
-            genreLabel.innerHTML = '<i class="fas fa-star"></i> favorite genre?';
-            renderGenres(videoGenres);
-        } else if (interest === 'books') {
-            genreLabel.innerHTML = '<i class="fas fa-book"></i> favorite book genre?';
-            renderGenres(bookGenres);
-        }
-        userPrefs.interest = interest; // Sync the state
+      if (interest === 'video') {
+        genreLabel.innerHTML = '<i class="fas fa-star"></i> favorite genre?';
+        renderGenres(videoGenres);
+      } else if (interest === 'books') {
+        genreLabel.innerHTML = '<i class="fas fa-book"></i> favorite book genre?';
+        renderGenres(bookGenres);
+      }
+      userPrefs.interest = interest; // Sync the state
     }
 
     // smart hint in step3
     if (interest === "video") {
-      let genre = genreRadios.length ? genreRadios.find(r=>r.checked).value : videoGenres[0].value;
+      let genre = genreRadios.length ? genreRadios.find(r => r.checked).value : videoGenres[0].value;
       hintSpan.innerText = `🎬 you like ${genre} content. any favorite title?`;
     } else if (interest === "books") {
-      let genre = genreRadios.length ? genreRadios.find(r=>r.checked).value : bookGenres[0].value;
+      let genre = genreRadios.length ? genreRadios.find(r => r.checked).value : bookGenres[0].value;
       hintSpan.innerText = `📚 ${genre} books are your thing. any recent read?`;
     }
   }
@@ -276,8 +279,8 @@
     selectedItems.clear();
     if (currentStep === 4) renderGrid();
   });
-  languageRadios.forEach(r=>{
-    r.addEventListener('change', ()=>{
+  languageRadios.forEach(r => {
+    r.addEventListener('change', () => {
       selectedLanguage = r.value;
       // if we're already choosing titles, re-fetch with the new language
       if (currentStep === 4) renderGrid();
@@ -285,7 +288,7 @@
   });
 
   // enable next button in step1 when all fields are populated
-  ['fullName','email','password'].forEach(id => {
+  ['fullName', 'email', 'password'].forEach(id => {
     const el = document.getElementById(id);
     if (el) {
       el.addEventListener('input', updateNextState);
@@ -328,60 +331,60 @@
     const captionEl = document.getElementById('step5Caption');
     const interest = interestSelect.value;
     if (interest === 'books') {
-        titleEl.innerHTML = 'Pick some Authors <span class="gold-accent">✍️</span>';
-        captionEl.innerText = 'step 5/7 - choose your favorite writers';
+      titleEl.innerHTML = 'Pick some Authors <span class="gold-accent">✍️</span>';
+      captionEl.innerText = 'step 5/7 - choose your favorite writers';
     } else {
-        titleEl.innerHTML = 'Pick some Stars <span class="gold-accent">🌟</span>';
-        captionEl.innerText = 'step 5/7 - choose a few favorites';
+      titleEl.innerHTML = 'Pick some Stars <span class="gold-accent">🌟</span>';
+      captionEl.innerText = 'step 5/7 - choose a few favorites';
     }
     grid.innerHTML = '<div class="loading">✨ Finding your possible favs...</div>';
     selectedItems.clear();
 
-    const API_BASE = window.location.hostname === "127.0.0.1" ? "http://127.0.0.1:8000" : "https://your-backend.onrender.com";
+    const API_BASE = (window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost") ? "http://localhost:8000" : "https://your-backend.onrender.com";
 
     try {
-        const response = await fetch(`${API_BASE}/discovery/onboarding/people`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                titles: Array.from(userPrefs.selectedTitles), // Use selected movies
-                lang: selectedLanguage,
-                type: interest
-            })
-        });
+      const response = await fetch(`${API_BASE}/discovery/onboarding/people`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          titles: Array.from(userPrefs.selectedTitles), // Use selected movies
+          lang: selectedLanguage,
+          type: interest
+        })
+      });
 
-        const data = await response.json();
-        const peopleList = data.people || [];
+      const data = await response.json();
+      const peopleList = data.people || [];
 
-        grid.innerHTML = ''; // Clear loading
+      grid.innerHTML = ''; // Clear loading
 
-        peopleList.forEach(item => { // We will use 'item' for consistency
-    const card = document.createElement('div');
-    card.className = 'selection-card';
-    card.innerHTML = `
+      peopleList.forEach(item => { // We will use 'item' for consistency
+        const card = document.createElement('div');
+        card.className = 'selection-card';
+        card.innerHTML = `
         <img src="${item.image}" alt="${item.name}" onerror="this.src='assests/author_placeholder.png'" style="border-radius: 50%; width: 100px; height: 100px; object-fit: cover; margin-bottom: 10px;">
         <p>${item.name}</p>
     `;
-    
-    card.addEventListener('click', () => {
-        card.classList.toggle('selected');
-        // FIX: Use 'item.name' instead of 'person.name'
-        if (selectedItems.has(item.name)) {
+
+        card.addEventListener('click', () => {
+          card.classList.toggle('selected');
+          // FIX: Use 'item.name' instead of 'person.name'
+          if (selectedItems.has(item.name)) {
             selectedItems.delete(item.name);
-        } else {
+          } else {
             selectedItems.add(item.name);
-        }
-        updateNextState();
-    });
-    grid.appendChild(card);
-});
+          }
+          updateNextState();
+        });
+        grid.appendChild(card);
+      });
     } catch (err) {
-        console.error("People fetch error:", err);
-        grid.innerHTML = '<p class="error">Could not load people.</p>';
+      console.error("People fetch error:", err);
+      grid.innerHTML = '<p class="error">Could not load people.</p>';
     }
-}
- 
-async function renderGrid() {
+  }
+
+  async function renderGrid() {
     const grid = document.getElementById('movieGrid');
     const interest = interestSelect.value;
     const genre = genreRadios.find(r => r.checked)?.value;
@@ -391,52 +394,52 @@ async function renderGrid() {
     selectedItems.clear();
 
     // Use the dynamic BASE URL for local/production
-    const API_BASE = window.location.hostname === "127.0.0.1" ? "http://127.0.0.1:8000" : "https://your-backend.onrender.com";
+    const API_BASE = (window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost") ? "http://localhost:8000" : "https://your-backend.onrender.com";
 
     try {
-        const res = await fetch(`${API_BASE}/discovery/onboarding/items?type=${interest}&genre=${genre}&lang=${lang}`);
-        const data = await res.json();
-        const list = data.items;
+      const res = await fetch(`${API_BASE}/discovery/onboarding/items?type=${interest}&genre=${genre}&lang=${lang}`);
+      const data = await res.json();
+      const list = data.items;
 
-        grid.innerHTML = ''; // Clear loading message
+      grid.innerHTML = ''; // Clear loading message
 
-        if (list.length === 0) {
-            grid.innerHTML = '<p class="error">No titles found for this selection. Try another genre!</p>';
-            return;
-        }
+      if (list.length === 0) {
+        grid.innerHTML = '<p class="error">No titles found for this selection. Try another genre!</p>';
+        return;
+      }
 
-        list.forEach(item => {
-            const card = document.createElement('div');
-            card.className = 'selection-card';
-            // Now using the real image path from TMDB/Google Books
-            card.innerHTML = `
+      list.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'selection-card';
+        // Now using the real image path from TMDB/Google Books
+        card.innerHTML = `
                 <img src="${item.image}" alt="${item.title}" onerror="this.src='assests/placeholder.png'">
                 <p>${item.title}</p>
             `;
-            
-            card.addEventListener('click', () => {
-                card.classList.toggle('selected');
-                if (selectedItems.has(item.title)) {
-                    selectedItems.delete(item.title);
-                } else {
-                    selectedItems.add(item.title);
-                }
-                updateNextState();
-            });
-            grid.appendChild(card);
+
+        card.addEventListener('click', () => {
+          card.classList.toggle('selected');
+          if (selectedItems.has(item.title)) {
+            selectedItems.delete(item.title);
+          } else {
+            selectedItems.add(item.title);
+          }
+          updateNextState();
         });
+        grid.appendChild(card);
+      });
     } catch (err) {
-        console.error("Fetch error:", err);
-        grid.innerHTML = '<p class="error">Connection failed. Is the backend running?</p>';
+      console.error("Fetch error:", err);
+      grid.innerHTML = '<p class="error">Connection failed. Is the backend running?</p>';
     }
-}
+  }
   function updateNextState() {
     if (currentStep === 1) {
       // require name, email, and password
       const nameEl = document.getElementById('fullName');
       const emailEl = document.getElementById('email');
       const pwdEl = document.getElementById('password');
-      nextBtn.disabled = 
+      nextBtn.disabled =
         !(nameEl && nameEl.value.trim() &&
           emailEl && emailEl.value.trim() &&
           pwdEl && pwdEl.value);
