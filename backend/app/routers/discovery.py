@@ -11,12 +11,45 @@ security = HTTPBearer()
 
 import uuid
 
-router = APIRouter(
-    prefix="/discovery",
-    tags=["Discovery"]
-)
+router = APIRouter(prefix="/discovery",tags=["Discovery"])
+
 
 # --- MOVIE ENDPOINTS ---
+
+@router.get("/onboarding/items")
+async def get_onboarding_items(
+    type: str = Query(..., description="video or books"),
+    genre: str = Query(..., description="e.g., action, fiction"),
+    lang: str = Query("en")
+):
+    """
+    Fetches real-time titles for the onboarding grid.
+    Uses the pre-built MovieService and BookService.
+    """
+    if type == "video":
+        # Calls the method you already wrote in movie_service.py
+        items = await movie_service.search_by_genre_lang(genre, lang)
+        return {"items": items}
+    
+    elif type == "books":
+        # Calls the method you already wrote in book_service.py
+        items = await book_service.search_by_genre_lang(genre, lang)
+        return {"items": items}
+
+    return {"items": []}
+
+@router.post("/onboarding/people") # Renamed to be generic
+async def get_onboarding_people(payload: dict):
+    titles = payload.get("titles", [])
+    lang = payload.get("lang", "en")
+    interest = payload.get("type", "video") # New field from frontend
+    
+    if interest == "video":
+        people = await movie_service.get_cast_from_titles(titles, lang)
+    else:
+        people = await book_service.get_authors_from_titles(titles, lang)
+        
+    return {"people": people}
 
 @router.get("/movies/trending")
 async def get_trending():

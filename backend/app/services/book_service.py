@@ -56,8 +56,24 @@ class BookService:
                     "title": item.get("volumeInfo", {}).get("title"),
                     "image": item.get("volumeInfo", {}).get("imageLinks", {}).get("thumbnail"),
                 }
-                for item in items if item.get("volumeInfo", {}).get("imageLinks", {}).get("thumbnail")
+                for item in items[:6] if item.get("volumeInfo", {}).get("imageLinks", {}).get("thumbnail")
             ]
+    async def get_authors_from_titles(self, titles: list, lang: str = "en"):
+        all_authors = {}
+        async with httpx.AsyncClient() as client:
+            for title in titles[:3]: # Limit to top 3 selections
+                url = f"{self.base_url}?q=intitle:{title}&langRestrict={lang}&key={self.api_key}&maxResults=1"
+                response = await client.get(url)
+                if response.status_code == 200:
+                    items = response.json().get("items", [])
+                    if items:
+                        volume_info = items[0].get("volumeInfo", {})
+                        authors = volume_info.get("authors", [])
+                        # Google Books doesn't provide specific author images easily, 
+                        # so we use a generic stylish avatar or an author-related search.
+                        for author in authors:
+                            all_authors[author] = "assests/author_placeholder.png" # Standard local placeholder
+        return [{"name": name, "image": img} for name, img in all_authors.items()]
 
     def _format_book_data(self, items):
         """Standardizes book data for the Lumina Dashboard."""

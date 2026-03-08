@@ -59,6 +59,8 @@ class MovieService:
             "drama": 18,
             "comedy": 35,
             "sci-fi": 878,
+            "mystery": 9648,
+            "fantasy": 14
         }
         genre_id = genre_map.get(genre.lower())
         if not genre_id:
@@ -72,6 +74,7 @@ class MovieService:
             "page": 1
         }
         
+    
         async with httpx.AsyncClient() as client:
             response = await client.get(url, headers=self.headers, params=params)
             if response.status_code != 200:
@@ -85,8 +88,36 @@ class MovieService:
                     "title": m.get("title"),
                     "image": f"https://image.tmdb.org/t/p/w500{m.get('poster_path')}" if m.get('poster_path') else None,
                 }
-                for m in results[:10] if m.get("poster_path")
+                for m in results[:6] if m.get("poster_path")
             ]
+    async def get_cast_from_titles(self, titles: list, lang: str = "en"):
+        all_actors = {}
+    
+        async with httpx.AsyncClient() as client:
+            for title in titles[:3]:  # Limit to first 3 selected movies to keep it fast
+            # 1. Search for the movie ID by title
+                search_url = f"{self.base_url}/search/movie?query={title}&language={lang}"
+                search_res = await client.get(search_url, headers=self.headers)
+            
+                if search_res.status_code == 200:
+                    results = search_res.json().get("results", [])
+                    if not results: continue
+                    movie_id = results[0]["id"]
+                
+                    # 2. Get the credits (cast) for that movie ID
+                    credits_url = f"{self.base_url}/movie/{movie_id}/credits?language={lang}"
+                    credits_res = await client.get(credits_url, headers=self.headers)
+                
+                    if credits_res.status_code == 200:
+                        cast = credits_res.json().get("cast", [])
+                        for actor in cast[:5]:  # Take top 5 billed actors per movie
+                            actor_name = actor.get("name")
+                            profile_path = actor.get("profile_path")
+                            if profile_path:
+                                all_actors[actor_name] = f"https://image.tmdb.org/t/p/w185{profile_path}"
+
+    # Return as a list of objects for the frontend
+        return [{"name": name, "image": img} for name, img in all_actors.items()]
 
     async def get_movie_detail(self, movie_id: str):
         """

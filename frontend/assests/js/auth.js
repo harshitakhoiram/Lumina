@@ -44,7 +44,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 console.log("Lumina: get started with", email);
                 // store temporarily and navigate to onboarding
                 sessionStorage.setItem('onboardingEmail', email);
-                window.location.href = '/frontend/onboarding.html';
+                window.location.href = 'onboarding.html';
             }
         });
     });
