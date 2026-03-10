@@ -362,7 +362,7 @@
         const card = document.createElement('div');
         card.className = 'selection-card';
         card.innerHTML = `
-        <img src="${item.image}" alt="${item.name}" onerror="this.src='assests/author_placeholder.png'" style="border-radius: 50%; width: 100px; height: 100px; object-fit: cover; margin-bottom: 10px;">
+        <img src="${item.image}" alt="${item.name}" onerror="this.src='assests/LuminaLogo.png'" style="border-radius: 50%; width: 100px; height: 100px; object-fit: cover; margin-bottom: 10px;">
         <p>${item.name}</p>
     `;
 
@@ -413,7 +413,7 @@
         card.className = 'selection-card';
         // Now using the real image path from TMDB/Google Books
         card.innerHTML = `
-                <img src="${item.image}" alt="${item.title}" onerror="this.src='assests/placeholder.png'">
+                <img src="${item.image}" alt="${item.title}" onerror="this.src='assests/LuminaLogo.png'">
                 <p>${item.title}</p>
             `;
 

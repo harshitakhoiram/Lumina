@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login - Lumina</title>
+    <script src="https://kit.fontawesome.com/e2bce648c2.js" crossorigin="anonymous"></script>
+    <script src="/frontend/assests/js/login.js" defer></script>
+    <link rel="stylesheet" href="/frontend/assests/css/auth.css"> 
+    <link rel="stylesheet" href="/frontend/assests/css/onboarding.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-container">          
+                <a class="logo" href="index.html"><img src="assests/LuminaLogo.png" alt="Lumina logo"></a>                                   
+            </div>
+        </div>
+    </nav>
+
+    <div class="form-card">
+        <div id="loginStep" class="form-step">
+            <div class="step-title">Welcome Back <span class="gold-accent">✦</span></div>
+            <div class="step-caption">sign in to access your personalized feed</div>
+
+            <form id="loginForm">
+                <div class="input-group">
+                    <label>Email address</label>
+                    <div class="field-wrapper">
+                        <i class="fas fa-envelope"></i>
+                        <input type="email" id="loginEmail" placeholder="you@example.com" required>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Password</label>
+                    <div class="field-wrapper">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="loginPassword" placeholder="your password" required>
+                    </div>
+                </div>
+
+                <div class="nav-buttons" style="justify-content: flex-end;">
+                    <button type="submit" class="primary">Login <i class="fas fa-sign-in-alt"></i></button>
+                </div>
+            </form>
+
+            <div style="margin-top: 2rem; text-align: center; border-top: 1px solid #222; padding-top: 1.5rem;">
+                <p style="color: #888; font-size: 0.9rem;">New to Lumina? 
+                    <a href="onboarding.html" class="gold-accent" style="text-decoration: none; font-weight: 600;">Create an account</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script src="assests/js/login.js"></script>
+</body>
+</html>

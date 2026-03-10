@@ -15,7 +15,7 @@ app = FastAPI(title="Lumina API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://127.0.0.1:5500", "http://localhost:5500", "http://localhost:8080", "http://127.0.0.1:8080"], # Added 8080 for Python http.server
+    allow_origins=["http://127.0.0.1:5500", "http://localhost:5500", "http://localhost:8080", "http://127.0.0.1:8000"], # Added 8080 for Python http.server
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

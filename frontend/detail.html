@@ -3,145 +3,112 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Content Details - Lumina</title>
-    <script src="https://kit.fontawesome.com/e2bce648c2.js" crossorigin="anonymous"></script>
+    <title>Lumina - Content Details</title>
     <link rel="stylesheet" href="assests/css/auth.css">
+    <link rel="stylesheet" href="assests/css/dashboard.css">
     <link rel="stylesheet" href="assests/css/detail.css">
-</head>
-<body>
-    <nav class="navbar">
-        <div class="container">
-            <div class="navbar-container">
-                <a class="logo" href="index.html"><img src="assests/LuminaLogo.png" alt="Lumina logo"></a>
-                <a href="dashboard.html" class="nav-link"><i class="fas fa-home"></i> Home</a>
-                <a href="search.html" class="nav-link"><i class="fas fa-search"></i> Search</a>
-            </div>
-        </div>
-    </nav>
-
-    <div class="detail-container">
-        <!-- Loading state -->
-        <div id="loadingState" class="loading-state">
-            <p><i class="fas fa-spinner fa-spin"></i> Loading...</p>
-        </div>
-
-        <!-- Content Detail -->
-        <div id="contentDetail" class="content-detail hidden">
-            <!-- Hero Section with Poster -->
-            <div class="hero-section">
-                <div class="hero-backdrop" id="backdropImage"></div>
-                <div class="hero-content">
-                    <img id="posterImage" class="poster" src="" alt="poster">
-                    <div class="info-section">
-                        <h1 id="contentTitle">Title</h1>
-                        <p id="contentType" class="content-type-badge">Movie</p>
-                        
-                        <div class="meta-info">
-                            <span id="rating" class="rating"><i class="fas fa-star"></i> 8.5/10</span>
-                            <span id="releaseDate" class="release-date">2024</span>
-                            <span id="runtime" class="runtime"><i class="fas fa-clock"></i> 120 min</span>
-                        </div>
-
-                        <div id="genres" class="genres"></div>
-
-                        <div class="action-buttons">
-                            <button id="likeBtn" class="action-btn like-btn">
-                                <i class="far fa-heart"></i> Like
-                            </button>
-                            <button id="bookmarkBtn" class="action-btn bookmark-btn">
-                                <i class="far fa-bookmark"></i> Bookmark
-                            </button>
-                            <button id="rateBtn" class="action-btn rate-btn">
-                                <i class="far fa-star"></i> Rate
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Overview -->
-            <div class="section">
-                <h2>Overview</h2>
-                <p id="overview" class="overview-text">No description available</p>
-            </div>
-
-            <!-- Cast & Crew -->
-            <div class="section">
-                <h2>Cast & Crew</h2>
-                <div class="cast-grid" id="castGrid"></div>
-            </div>
-
-            <!-- Director Info -->
-            <div id="directorSection" class="section hidden">
-                <h2>Director</h2>
-                <p id="director"></p>
-            </div>
-
-            <!-- Language & External Links -->
-            <div class="section">
-                <h2>Details</h2>
-                <div class="details-grid">
-                    <div class="detail-item">
-                        <label>Language</label>
-                        <p id="language">-</p>
-                    </div>
-                    <div class="detail-item">
-                        <label>Content Type</label>
-                        <p id="contentTypeDetail">-</p>
-                    </div>
-                    <div id="publisherSection" class="detail-item hidden">
-                        <label>Publisher</label>
-                        <p id="publisher">-</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- External Links -->
-            <div class="section">
-                <h2>Watch / Read</h2>
-                <div class="external-links">
-                    <a id="tmdbLink" href="#" target="_blank" class="external-btn tmdb-btn">
-                        <i class="fab fa-tmdb"></i> TMDB
-                    </a>
-                    <a id="imdbLink" href="#" target="_blank" class="external-btn imdb-btn hidden">
-                        <i class="fab fa-imdb"></i> IMDb
-                    </a>
-                </div>
-            </div>
-        </div>
-
-        <!-- Error state -->
-        <div id="errorState" class="error-state hidden">
-            <i class="fas fa-exclamation-circle"></i>
-            <h2>Oops! Content not found.</h2>
-            <p>We couldn't load the details for this content.</p>
-            <a href="search.html" class="back-btn">← Back to Search</a>
-        </div>
-    </div>
-
-    <!-- Rating Modal -->
-    <div id="ratingModal" class="modal hidden">
-        <div class="modal-content">
-            <span class="close-modal">&times;</span>
-            <h2>Rate This Content</h2>
-            <div class="star-rating" id="starRating">
-                <i class="far fa-star" data-rating="1"></i>
-                <i class="far fa-star" data-rating="2"></i>
-                <i class="far fa-star" data-rating="3"></i>
-                <i class="far fa-star" data-rating="4"></i>
-                <i class="far fa-star" data-rating="5"></i>
-                <i class="far fa-star" data-rating="6"></i>
-                <i class="far fa-star" data-rating="7"></i>
-                <i class="far fa-star" data-rating="8"></i>
-                <i class="far fa-star" data-rating="9"></i>
-                <i class="far fa-star" data-rating="10"></i>
-            </div>
-            <p id="ratingDisplay">Click to rate</p>
-            <button id="submitRatingBtn" class="submit-btn">Submit Rating</button>
-        </div>
-    </div>
-
     <script src="assests/js/api.js"></script>
     <script src="assests/js/detail.js"></script>
+    
+</head>
+<body class="redesign">
+    <div id="wrapper">
+        <header class="main-header">
+            <div class="logo-box">
+                <a href="dashboard.html"><img src="/frontend/assests/LuminaLogo.png" alt="Lumina Logo" class="lumina-logo"></a>
+            </div>
+            <div class="search-section">
+                <div class="search-wrapper">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Search within Lumina..." id="navbar-query">
+                </div>
+            </div>
+            <div class="user-section">
+                <a href="dashboard.html" class="nav-link"><i class="fas fa-home"></i> Home</a>
+                <div class="profile-circle"><i class="fas fa-user"></i></div>
+            </div>
+        </header>
+
+        <div id="pagecontent" class="pagecontent">
+            <div id="content-2-wide" class="flatland">
+                <div id="main_top" class="main">
+                    
+                    <div class="title-overview">
+                        <div id="title-overview-widget" class="heroic-overview">
+                            <div class="vital">
+                                <div class="title_block">
+                                    <div class="title_bar_wrapper">
+                                        <div class="ratings_wrapper">
+                                            <div class="imdbRating">
+                                                <div class="ratingValue">
+                                                    <strong><span id="dynRating">-</span></strong><span class="grey">/10</span>
+                                                </div>
+                                                <a href="#"><span class="small" id="dynVoteCount">0</span> votes</a>
+                                            </div>
+                                        </div>
+                                        <div class="titleBar">
+                                            <div class="title_wrapper">
+                                                <h1 itemprop="name" id="dynTitle">Loading Title... <span id="titleYear" class="grey">(2026)</span></h1>
+                                                <div class="subtext">
+                                                    <span id="dynRatingType">M</span> <span class="ghost">|</span>
+                                                    <time id="dynRuntime">0 min</time> <span class="ghost">|</span>
+                                                    <span id="dynGenres">Genres</span> <span class="ghost">|</span>
+                                                    <span id="dynReleaseDate">Release Date</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="minPosterWithPlotSummaryHeight">
+                                <div class="poster">
+                                    <img id="dynPoster" src="assets/placeholder.png" alt="poster" />
+                                </div>
+                                <div class="plot_summary_wrapper">
+                                    <div class="plot_summary">
+                                        <div class="summary_text" id="dynOverview">
+                                            Fetching dynamic overview from Lumina AI...
+                                        </div>
+                                        <div class="credit_summary_item">
+                                            <h4 class="inline">Director:</h4> <span id="dynDirector">-</span>
+                                        </div>
+                                        <div class="credit_summary_item">
+                                            <h4 class="inline">Stars:</h4> <span id="dynStars">-</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="article" id="titleCast">
+                        <h2>Cast</h2>
+                        <table class="cast_list" id="dynCastTable">
+                            </table>
+                    </div>
+
+                    <div id="titleDidYouKnow" class="article">
+                        <h2>Did You Know?</h2>
+                        <div id="trivia" class="txt-block">
+                            <h4>Trivia</h4>
+                            <p id="dynTrivia">Loading trivia...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="sidebar">
+                    <div class="mini-article">
+                        <h3>Lumina Picks</h3>
+                        <div class="widget_image">
+                            <img id="sidebarImage" src="assets/placeholder.png" style="width:100%">
+                        </div>
+                        <p class="blurb">Based on your interest in this title, our AI suggests checking out the full collection.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="assets/js/detail.js"></script>
 </body>
 </html>

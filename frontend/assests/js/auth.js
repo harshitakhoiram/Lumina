@@ -17,7 +17,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 // Close all other items first
                 accordionItems.forEach((el) => {
                     el.classList.remove("active");
-                    const content = el.querySelector(".paragraph"); // Simplified selector
+                    const content = el.querySelector(".paragraph"); 
                     if (content) content.style.maxHeight = null;
                 });
 
@@ -33,7 +33,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // --- 2. FORM SUBMISSION ---
+    // --- 2. FORM SUBMISSION (Onboarding) ---
     const emailForms = document.querySelectorAll(".email");
     emailForms.forEach(form => {
         form.addEventListener("submit", (e) => {
@@ -48,10 +48,19 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
     });
+
+    // --- 3. SIGN IN NAVIGATION ---
+    // Select the Sign In button by its class from index.html
+    const signInBtn = document.querySelector(".sign-btn");
+    if (signInBtn) {
+        signInBtn.addEventListener("click", (e) => {
+            e.preventDefault(); // Prevent default anchor behavior
+            window.location.href = 'login.html';
+        });
+    }
 });
 
-// --- 3. VALIDATION FUNCTIONS ---
-// Helper to avoid repeating code
+// --- 4. VALIDATION FUNCTIONS ---
 function validateEmailField(inputClass, messageClass) {
     const input = document.querySelector(inputClass);
     const message = document.querySelector(messageClass);
