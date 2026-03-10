@@ -60,6 +60,7 @@ class MovieService:
         results = data.get("results", [])
         return [
             {
+                "id": m.get("id"),
                 "title": m.get("title"),
                 "image": f"https://image.tmdb.org/t/p/w500{m.get('poster_path')}" if m.get('poster_path') else None,
             }
@@ -90,6 +91,30 @@ class MovieService:
 
         return [{"name": name, "image": img} for name, img in all_actors.items()]
 
+    async def get_movie_detail(self, movie_id: str):
+        url = f"{self.base_url}/movie/{movie_id}"
+        # Fetch main movie data
+        m = await self._make_request(url, params={"append_to_response": "credits"})
+        
+        if not m:
+            return {"error": "Could not fetch movie details"}
+            
+        # Extract director from credits
+        credits = m.get("credits", {})
+        crew = credits.get("crew", [])
+        director = next((person.get("name") for person in crew if person.get("job") == "Director"), "-")
+
+        return {
+            "id": m.get("id"),
+            "title": m.get("title"),
+            "image": f"https://image.tmdb.org/t/p/w500{m.get('poster_path')}" if m.get('poster_path') else None,
+            "rating": round(m.get("vote_average", 0), 1),
+            "overview": m.get("overview"),
+            "genres": [g.get("name") for g in m.get("genres", [])],
+            "director": director,
+            "cast": credits.get("cast", [])[:10]  # First 10 cast members
+        }
+    
     def _format_movie_data(self, results):
         return [
             {

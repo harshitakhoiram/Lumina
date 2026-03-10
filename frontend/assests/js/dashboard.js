@@ -186,6 +186,10 @@ function renderSection(containerId, items) {
         anchor.appendChild(img);
         anchor.addEventListener("click", (e) => {
             e.preventDefault();
+            console.log("Saving item to session:", item);
+            if (!item.id && !item.movie_id) {
+                console.error("This item is missing an ID! Check backend _format_movie_data");
+            }
             sessionStorage.setItem("selectedContent", JSON.stringify(item));
             window.location.href = "detail.html";
         });
@@ -202,3 +206,25 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // Auto-refresh recommendations every 5 minutes
 setInterval(loadDailyRecommendations, 5 * 60 * 1000);
+
+function buildSelectedContent(item) {
+    const pickNumericId = (...values) => {
+        for (const value of values) {
+            const str = String(value ?? "").trim();
+            if (/^\d+$/.test(str)) return str;
+        }
+        return null;
+    };
+
+    return {
+        ...item,
+        tmdb_id: pickNumericId(item?.tmdb_id, item?.movie_id, item?.id),
+        app_content_id: item?.content_id || null
+    };
+}
+
+// When opening detail page:
+function openDetailPage(item) {
+    sessionStorage.setItem('selectedContent', JSON.stringify(buildSelectedContent(item)));
+    window.location.href = "detail.html";
+}
