@@ -11,9 +11,6 @@
     href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Outfit:wght@300;400;600;700&display=swap"
     rel="stylesheet">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <script defer src="https://use.fontawesome.com/releases/v5.1.0/js/all.js"
-    integrity="sha384-3LK/3kTpDE/Pkp8gTNp2gR/2gOiwQ6QaO7Td0zV76UFJVhqLl4Vl3KL1We6q6wR9"
-    crossorigin="anonymous"></script>
 
   <script defer src="assests/js/dashboard.js"></script>
 </head>
@@ -24,23 +21,21 @@
     <!-- HEADER -->
     <header class="main-header">
       <div class="logo-box">
-        <a href="#home">
+        <a href="dashboard.html">
           <img src="/frontend/assests/LuminaLogo.png" alt="Lumina Logo" class="lumina-logo">
         </a>
       </div>
 
       <div class="search-section">
-        <div class="search-wrapper">
-          <i class="fas fa-search"></i>
-          <input type="text" placeholder="Search movies, series, books..." id="global-search">
-        </div>
+        <button class="search-btn-circle" id="searchPageBtn" title="Search Lumina">
+          <span aria-hidden="true">Search</span>
+        </button>
       </div>
 
       <div class="user-section">
-        <button id="searchPageBtn" class="nav-btn-header" title="Advanced Search">🔍 Search</button>
         <span class="account-text">My Account</span>
         <div class="profile-circle" id="profileBtn">
-          <i class="fas fa-user"></i>
+          <span aria-hidden="true">U</span>
         </div>
       </div>
     </header>
@@ -54,25 +49,42 @@
           <button class="hero-nav prev" id="heroPrev">&#10094;</button>
           <div class="hero-display" id="hero-display">
             <p class="loading">Finding the perfect matches...</p>
-        </div>
-        <button class="hero-nav next" id="heroNext">&#10095;</button>
+          </div>
+          <button class="hero-nav next" id="heroNext">&#10095;</button>
         </div>
       </div>
 
-      <h1 id="header-genre">Since you liked</h1>
+      <h1 id="header-genre">Explore</h1>
       <div class="box" id="container-genre">
         <!-- JS will inject items here -->
       </div>
+      <div id="genre-sections-extra"></div>
 
       <h1 id="header-interest">Since you like</h1>
       <div class="box" id="container-interest">
         <!-- JS will inject items here -->
       </div>
 
-      <h1 id="header-global">We think you'll like this</h1>
-      <div class="box" id="container-global">
-        <!-- JS will inject items here -->
+      <div id="book-rec-section" style="display: none; margin: 40px 0;">
+        <h1 id="header-book">Recommended Read</h1>
+        <div class="box" id="container-book">
+          <!-- JS will inject single book here -->
+        </div>
       </div>
+
+      <section class="fan-block" id="fan-block">
+        <div class="fan-header">
+          <h1 id="header-global">Fan favorites</h1>
+          <p>This week's top picks</p>
+        </div>
+        <div class="fan-carousel">
+          <button class="fan-nav fan-prev" id="fanPrev" aria-label="Previous">&#10094;</button>
+          <div class="fan-strip" id="container-global">
+            <!-- JS will inject fan-favorite cards here -->
+          </div>
+          <button class="fan-nav fan-next" id="fanNext" aria-label="Next">&#10095;</button>
+        </div>
+      </section>
 
       <div class="sub-links">
         <br>

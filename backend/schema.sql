@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS user_preferences (
   user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
   interest TEXT,
   language TEXT,
-  genre TEXT,
+  genre TEXT[],
   selected_titles TEXT[],
   selected_actors TEXT[],
   favorite_content TEXT,

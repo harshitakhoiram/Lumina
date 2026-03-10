@@ -76,10 +76,39 @@ def pick_date(published: str | None) -> str | None:
         return None
     return None
 
-def to_thumbnail(image_links: dict | None) -> str | None:
+def get_best_image_url(image_links: dict | None) -> str | None:
     if not image_links:
         return None
-    return image_links.get("thumbnail") or image_links.get("smallThumbnail")
+    
+    # Preference order for higher resolution
+    priority = ["extraLarge", "large", "medium", "small", "thumbnail", "smallThumbnail"]
+    url = None
+    for key in priority:
+        if key in image_links:
+            url = image_links[key]
+            break
+            
+    if not url:
+        return None
+        
+    # Transformations:
+    # 1. Force HTTPS
+    if url.startswith("http:"):
+        url = url.replace("http:", "https:", 1)
+        
+    # 2. Increase zoom level
+    if "&zoom=1" in url:
+        url = url.replace("&zoom=1", "&zoom=3")
+    elif "?zoom=1" in url:
+        url = url.replace("?zoom=1", "?zoom=3")
+        
+    # 3. Remove curly edges
+    if "&edge=curl" in url:
+        url = url.replace("&edge=curl", "")
+    elif "?edge=curl" in url:
+        url = url.replace("?edge=curl", "")
+        
+    return url
 
 def normalize(item: dict) -> dict | None:
     external_id = item.get("id")
@@ -95,7 +124,7 @@ def normalize(item: dict) -> dict | None:
     genres = [c.strip() for c in categories if isinstance(c, str) and c.strip()]
 
     image_links = vi.get("imageLinks")
-    poster_url = to_thumbnail(image_links)
+    poster_url = get_best_image_url(image_links)
 
     rating = vi.get("averageRating")  # can be missing
     # popularity_score isn't available consistently; keep NULL

@@ -78,7 +78,7 @@
     password: null,           // step1
     interest: null,           // step 2: 'video' or 'books'
     language: null,           // step 3: selected language
-    genre: null,              // step 3: selected genre
+    genre: [],                // step 3: selected genres (ARRAY)
     selectedTitles: [],       // step 4: array of selected movie/book titles
     selectedActors: [],       // step 5: array of selected actors/authors
     favoriteContent: null,    // step 6: favorite from selections
@@ -99,8 +99,8 @@
     } else if (currentStep === 3) {
       const selectedLang = languageRadios.find(r => r.checked);
       if (selectedLang) userPrefs.language = selectedLang.value;
-      const selectedGenre = genreRadios.find(r => r.checked);
-      if (selectedGenre) userPrefs.genre = selectedGenre.value;
+      const selectedGenres = Array.from(document.querySelectorAll('input[name="genre"]:checked')).map(cb => cb.value);
+      userPrefs.genre = selectedGenres;
     } else if (currentStep === 4) {
       userPrefs.selectedTitles = Array.from(selectedItems);
       selectedItems.clear();
@@ -117,10 +117,13 @@
     userPrefs.selectedActors = Array.from(selectedItems); // Capture Step 5 selections
 
     try {
+      nextBtn.disabled = true; // Prevent double clicks
+      nextBtn.innerHTML = `Finishing... <i class="fas fa-spinner fa-spin"></i>`;
+
       const API_BASE = (window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost") ? "http://localhost:8000" : "https://your-backend.onrender.com";
 
-      // Step A: Sign up the user
-      const signupResp = await fetch(`${API_BASE}/auth/signup`, {
+      // Step A: Try Sign up
+      let signupResp = await fetch(`${API_BASE}/auth/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -130,11 +133,33 @@
         })
       });
 
-      if (!signupResp.ok) throw new Error("Signup failed. Check if email exists.");
+      let token, userId;
 
-      const signupData = await signupResp.json();
-      const token = signupData.access_token;
-      const userId = signupData.user_id;
+      if (signupResp.ok) {
+        const signupData = await signupResp.json();
+        token = signupData.access_token;
+        userId = signupData.user_id;
+      } else if (signupResp.status === 400) {
+        // Fallback: Try Login if email exists
+        console.log("Email exists, trying login fallback...");
+        const loginResp = await fetch(`${API_BASE}/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: userPrefs.email,
+            password: userPrefs.password
+          })
+        });
+        if (loginResp.ok) {
+          const loginData = await loginResp.json();
+          token = loginData.access_token;
+          userId = loginData.user_id;
+        } else {
+          throw new Error("User exists but login failed. Check password.");
+        }
+      } else {
+        throw new Error("Signup failed with status " + signupResp.status);
+      }
 
       localStorage.setItem('access_token', token);
       localStorage.setItem('user_id', userId);
@@ -144,9 +169,9 @@
         interest: userPrefs.interest,
         language: userPrefs.language,
         genre: userPrefs.genre,
-        selectedTitles: userPrefs.selectedTitles, // Step 4 movies/books
-        selectedActors: userPrefs.selectedActors, // Step 5 stars/authors
-        favoriteContent: userPrefs.selectedTitles[0] || null // Default to first pick
+        selectedTitles: userPrefs.selectedTitles,
+        selectedActors: userPrefs.selectedActors,
+        favoriteContent: userPrefs.selectedTitles[0] || null
       };
 
       const profileResp = await fetch(`${API_BASE}/auth/profile`, {
@@ -160,14 +185,17 @@
 
       if (profileResp.ok) {
         console.log('Onboarding complete!');
-        // Redirect to dashboard (relative path)
         window.location.href = 'dashboard.html';
       } else {
         alert('Error saving your preferences. Please try again.');
+        nextBtn.disabled = false;
+        nextBtn.innerHTML = `finish <i class="fas fa-check"></i>`;
       }
     } catch (err) {
       console.error('Final Step Error:', err);
-      alert('An error occurred during finish. Check the console.');
+      alert(err.message || 'An error occurred during finish.');
+      nextBtn.disabled = false;
+      nextBtn.innerHTML = `finish <i class="fas fa-check"></i>`;
     }
   }
   // step change
@@ -227,9 +255,9 @@
     genreContainer.innerHTML = '';
     list.forEach((g, idx) => {
       const label = document.createElement('label');
-      label.className = 'radio-option';
+      label.className = 'checkbox-option'; // Changed from radio-option for clarity
       label.innerHTML = `
-        <input type="radio" name="genre" value="${g.value}" ${idx === 0 ? 'checked' : ''}> <span>${g.label}</span>
+        <input type="checkbox" name="genre" value="${g.value}"> <span>${g.label}</span>
       `;
       genreContainer.appendChild(label);
     });
@@ -264,11 +292,13 @@
 
     // smart hint in step3
     if (interest === "video") {
-      let genre = genreRadios.length ? genreRadios.find(r => r.checked).value : videoGenres[0].value;
-      hintSpan.innerText = `🎬 you like ${genre} content. any favorite title?`;
+      let selected = Array.from(document.querySelectorAll('input[name="genre"]:checked')).map(cb => cb.value);
+      let genreText = selected.length > 0 ? selected.join(' & ') : "something";
+      hintSpan.innerText = `🎬 you like ${genreText} content. any favorite title?`;
     } else if (interest === "books") {
-      let genre = genreRadios.length ? genreRadios.find(r => r.checked).value : bookGenres[0].value;
-      hintSpan.innerText = `📚 ${genre} books are your thing. any recent read?`;
+      let selected = Array.from(document.querySelectorAll('input[name="genre"]:checked')).map(cb => cb.value);
+      let genreText = selected.length > 0 ? selected.join(' & ') : "something";
+      hintSpan.innerText = `📚 ${genreText} books are your thing. any recent read?`;
     }
   }
 
@@ -347,7 +377,8 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          titles: Array.from(userPrefs.selectedTitles), // Use selected movies
+          titles: Array.from(userPrefs.selectedTitles),
+          genres: userPrefs.genre.join(','), // Pass selected genres
           lang: selectedLanguage,
           type: interest
         })
@@ -387,7 +418,8 @@
   async function renderGrid() {
     const grid = document.getElementById('movieGrid');
     const interest = interestSelect.value;
-    const genre = genreRadios.find(r => r.checked)?.value;
+    const selectedGenres = Array.from(document.querySelectorAll('input[name="genre"]:checked')).map(cb => cb.value);
+    const genre = selectedGenres.join(','); // Pass as comma-separated
     const lang = selectedLanguage;
 
     grid.innerHTML = '<div class="loading">✨ Curating your matches...</div>';

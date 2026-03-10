@@ -80,8 +80,8 @@ async function searchContent(query) {
     try {
         const results = [];
 
-        // Search movies & series from TMDB
-        if (currentFilter === "all" || currentFilter === "movie" || currentFilter === "series") {
+        // Search movies
+        if (currentFilter === "all" || currentFilter === "movie") {
             const movieRes = await fetch(
                 `${API_BASE_URL}/discovery/movies/search?q=${encodeURIComponent(query)}`,
                 {
@@ -94,7 +94,21 @@ async function searchContent(query) {
             }
         }
 
-        // Search books from Google Books
+        // Search series
+        if (currentFilter === "all" || currentFilter === "series") {
+            const seriesRes = await fetch(
+                `${API_BASE_URL}/discovery/series/search?q=${encodeURIComponent(query)}`,
+                {
+                    headers: { Authorization: `Bearer ${currentToken}` },
+                }
+            );
+            if (seriesRes.ok) {
+                const series = await seriesRes.json();
+                results.push(...series);
+            }
+        }
+
+        // Search books
         if (currentFilter === "all" || currentFilter === "book") {
             const bookRes = await fetch(
                 `${API_BASE_URL}/discovery/books/search?q=${encodeURIComponent(query)}`,
@@ -123,7 +137,6 @@ async function searchContent(query) {
         noResults.classList.remove("hidden");
     }
 }
-
 function displayResults(items) {
     resultsGrid.innerHTML = "";
 

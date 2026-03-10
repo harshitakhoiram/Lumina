@@ -10,12 +10,28 @@ if (!currentToken) {
 
 let heroIndex = 0;
 let heroData = [];
+let heroNavInitialized = false;
+
+function normalizeContentType(value) {
+    return String(value || "movie").toLowerCase();
+}
+
+function normalizeItem(item) {
+    const contentType = normalizeContentType(item.content_type);
+    const idCandidate = item.tmdb_id || item.external_id || item.id || item.movie_id || item.content_id;
+    return {
+        ...item,
+        id: idCandidate,
+        tmdb_id: item.tmdb_id || item.external_id || item.id || null,
+        content_type: contentType
+    };
+}
 
 // 2. NAVIGATION & SEARCH
 const setupNavigation = () => {
-    const searchPageBtn = document.getElementById("searchPageBtn");
-    if (searchPageBtn) {
-        searchPageBtn.addEventListener("click", () => {
+    const searchBtn = document.getElementById("searchPageBtn");
+    if (searchBtn) {
+        searchBtn.addEventListener("click", () => {
             window.location.href = "search.html";
         });
     }
@@ -26,19 +42,6 @@ const setupNavigation = () => {
             window.location.href = "profile.html";
         });
     }
-
-    const globalSearch = document.getElementById("global-search");
-    if (globalSearch) {
-        globalSearch.addEventListener("keypress", (e) => {
-            if (e.key === "Enter") {
-                const query = globalSearch.value.trim();
-                if (query) {
-                    sessionStorage.setItem("searchQuery", query);
-                    window.location.href = "search.html";
-                }
-            }
-        });
-    }
 };
 
 // 3. HERO CAROUSEL LOGIC
@@ -46,16 +49,38 @@ function initHeroNav() {
     const next = document.getElementById("heroNext");
     const prev = document.getElementById("heroPrev");
 
-    // Remove existing listeners to prevent double-firing if re-initialized
-    if (next && prev) {
-        next.onclick = () => {
+    if (next) {
+        next.onclick = (e) => {
+            e.stopPropagation();
+            if (!heroData.length) return;
             heroIndex = (heroIndex + 1) % heroData.length;
             renderHero();
         };
-        prev.onclick = () => {
+    }
+
+    if (prev) {
+        prev.onclick = (e) => {
+            e.stopPropagation();
+            if (!heroData.length) return;
             heroIndex = (heroIndex - 1 + heroData.length) % heroData.length;
             renderHero();
         };
+    }
+
+    if (!heroNavInitialized) {
+        window.addEventListener("keydown", (e) => {
+            if (!heroData.length) return;
+
+            if (e.key === "ArrowRight") {
+                heroIndex = (heroIndex + 1) % heroData.length;
+                renderHero();
+            } else if (e.key === "ArrowLeft") {
+                heroIndex = (heroIndex - 1 + heroData.length) % heroData.length;
+                renderHero();
+            }
+        });
+
+        heroNavInitialized = true;
     }
 }
 
@@ -64,23 +89,13 @@ function renderHero() {
     if (!display || heroData.length === 0) return;
 
     const item = heroData[heroIndex];
-    
-    // 1. Correct TMDB Base URL
-    const tmdbBaseUrl = "https://image.tmdb.org/t/p/original"; 
-    
-    // 2. CHECK THE KEYS: Your backend likely sends 'image' or 'poster_url'
-    // We add a fallback to make sure imagePath is NEVER undefined before the .startsWith check
+    const tmdbBaseUrl = "https://image.tmdb.org/t/p/original";
     const imagePath = item.image || item.poster_url || item.backdrop_url || "";
-    
-    // 3. FIX THE TYPO: Changed 'assests' to 'assets'
-    let finalImageUrl = "assets/placeholder.png"; 
+    let finalImageUrl = "assests/LuminaLogo.png";
 
     if (imagePath) {
-        // If it's a full URL (starts with http), use it. Otherwise, append TMDB base.
         finalImageUrl = imagePath.startsWith('http') ? imagePath : `${tmdbBaseUrl}${imagePath}`;
     }
-
-    console.log("SUCCESS: Loading Hero Image ->", finalImageUrl);
 
     display.innerHTML = `
         <div class="hero-slide active" style="background-image: url('${finalImageUrl}');">
@@ -88,24 +103,25 @@ function renderHero() {
                 <h2 class="gold-accent">${item.title || "Featured Content"}</h2>
                 <p>${item.overview ? item.overview.substring(0, 160) + '...' : 'Discover your next favorite on Lumina.'}</p>
                 <button id="heroKnowMore" class="nav-btn-header" style="background: var(--accent); color: black; border: none; font-weight: bold; margin-top: 15px;">
-                    <i class="fas fa-play"></i> Know More
+                    Know More
                 </button>
             </div>
         </div>
     `;
-    document.getElementById("heroKnowMore").addEventListener("click", () => {
-        // Save the current movie data so the next page knows what to show
-        sessionStorage.setItem("selectedContent", JSON.stringify(item));
-        
-        // Redirect to your details or search page
-        window.location.href = "detail.html"; 
-    });
+
+    const knowMoreBtn = document.getElementById("heroKnowMore");
+    if (knowMoreBtn) {
+        knowMoreBtn.addEventListener("click", () => {
+            sessionStorage.setItem("selectedContent", JSON.stringify(normalizeItem(item)));
+            window.location.href = "detail.html";
+        });
+    }
 }
 
 // 4. DATA FETCHING & RENDERING
 async function loadDailyRecommendations() {
     try {
-        const response = await fetch(`${API_BASE_URL}/recommendations/personalized`, {
+        const response = await fetch(`${API_BASE_URL}/recommendations/personalized?t=${Date.now()}`, {
             headers: { Authorization: `Bearer ${currentToken}` },
         });
 
@@ -113,21 +129,35 @@ async function loadDailyRecommendations() {
             const data = await response.json();
 
             // Setup Hero Section
-            heroData = data.slider || [];
+            heroData = (data.slider || []).map(normalizeItem);
             if (heroData.length > 0) {
                 renderHero();
                 initHeroNav();
             }
 
             // Render Row Grids
-            renderSection("container-genre", data.genre_highlights || []);
-            renderSection("container-interest", data.interest_trending || []);
-            renderSection("container-global", data.global_top || []);
+            renderGenreSections(data);
+            renderSection("container-interest", (data.interest_trending || []).map(normalizeItem));
+            renderSection("container-global", (data.global_top || []).map(normalizeItem));
 
-            // Update Heading Context
-            const genreHeader = document.getElementById("header-genre");
-            if (genreHeader && data.genre_name) {
-                genreHeader.innerHTML = `Since you liked <span class="gold-accent">${data.genre_name}</span>`;
+            // Handle Book Recommendation
+            const bookSection = document.getElementById("book-rec-section");
+            if (bookSection && data.book_recommendation) {
+                bookSection.style.display = "block";
+                renderSection("container-book", [normalizeItem(data.book_recommendation)]);
+                const bookHeader = document.getElementById("header-book");
+                if (bookHeader) bookHeader.innerHTML = `Recommended Read in <span class="gold-accent">${data.genre_name}</span>`;
+            }
+
+            // Update Dynamic Headings
+            const interestHeader = document.getElementById("header-interest");
+            if (interestHeader && data.liked_title) {
+                const cleanTitle = data.liked_title.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+                interestHeader.innerHTML = `Since you like <span class="gold-accent">${cleanTitle}</span>`;
+            }
+            const recommendationHeader = document.getElementById("header-recommendation-day");
+            if (recommendationHeader && data.genre_name) {
+                recommendationHeader.innerHTML = `Recommendation of the Day in <span class="gold-accent">${data.genre_name}</span>`;
             }
         } else {
             fetchTrendingFallback();
@@ -146,7 +176,7 @@ async function fetchTrendingFallback() {
 
         if (response.ok) {
             const movies = await response.json();
-            heroData = movies;
+            heroData = movies.map(normalizeItem);
             renderHero();
             initHeroNav();
         }
@@ -158,7 +188,12 @@ async function fetchTrendingFallback() {
 function renderSection(containerId, items) {
     const container = document.getElementById(containerId);
     if (!container) return;
-    
+
+    if (containerId === "container-global") {
+        renderFanFavorites(items);
+        return;
+    }
+
     container.innerHTML = "";
 
     if (items.length === 0) {
@@ -166,10 +201,13 @@ function renderSection(containerId, items) {
         return;
     }
     const tmdbBaseUrl = "https://image.tmdb.org/t/p/w500"; //will see 
-    items.forEach((item) => {
+    const compactBookCard = containerId === "container-book";
+
+    items.forEach((raw) => {
+        const item = normalizeItem(raw);
         const anchor = document.createElement("a");
         anchor.href = "#";
-        anchor.className = "rec-link";
+        anchor.className = compactBookCard ? "rec-link rec-link-book" : "rec-link";
 
         const img = document.createElement("img");
         const imagePath = item.poster_url || item.image || "";
@@ -183,14 +221,25 @@ function renderSection(containerId, items) {
         img.alt = item.title || "Content";
         img.loading = "lazy";
 
-        anchor.appendChild(img);
+        if (compactBookCard) {
+            const textWrap = document.createElement("div");
+            textWrap.className = "book-mini-info";
+            textWrap.innerHTML = `
+                <h3>${item.title || "Recommended Read"}</h3>
+                <p>${item.rating ? `Rating ${item.rating}/10` : "Picked for your taste"}</p>
+            `;
+            anchor.appendChild(img);
+            anchor.appendChild(textWrap);
+        } else {
+            anchor.appendChild(img);
+        }
+
         anchor.addEventListener("click", (e) => {
             e.preventDefault();
-            console.log("Saving item to session:", item);
             if (!item.id && !item.movie_id) {
                 console.error("This item is missing an ID! Check backend _format_movie_data");
             }
-            sessionStorage.setItem("selectedContent", JSON.stringify(item));
+            sessionStorage.setItem("selectedContent", JSON.stringify(normalizeItem(item)));
             window.location.href = "detail.html";
         });
 
@@ -198,14 +247,102 @@ function renderSection(containerId, items) {
     });
 }
 
+function renderFanFavorites(items) {
+    const container = document.getElementById("container-global");
+    if (!container) return;
+
+    container.innerHTML = "";
+    if (!items.length) {
+        container.innerHTML = '<p class="loading">No fan favorites available right now.</p>';
+        return;
+    }
+
+    const tmdbBaseUrl = "https://image.tmdb.org/t/p/w500";
+    items.forEach((raw) => {
+        const item = normalizeItem(raw);
+        const imagePath = item.poster_url || item.image || "";
+        const finalImageUrl = imagePath
+            ? (imagePath.startsWith("http") ? imagePath : `${tmdbBaseUrl}${imagePath}`)
+            : "assests/LuminaLogo.png";
+
+        const card = document.createElement("a");
+        card.href = "#";
+        card.className = "fan-card";
+        card.innerHTML = `
+            <img src="${finalImageUrl}" alt="${item.title || "Fan favorite"}" loading="lazy">
+            <div class="fan-meta">
+                <div class="fan-rating">★ ${item.rating || "-"}</div>
+                <div class="fan-title">${item.title || "Untitled"}</div>
+            </div>
+        `;
+
+        card.addEventListener("click", (e) => {
+            e.preventDefault();
+            sessionStorage.setItem("selectedContent", JSON.stringify(normalizeItem(item)));
+            window.location.href = "detail.html";
+        });
+
+        container.appendChild(card);
+    });
+
+    // Refresh arrow visibility after the strip content updates.
+    window.requestAnimationFrame(updateFanCarouselNavState);
+}
+
+function updateFanCarouselNavState() {
+    const strip = document.getElementById("container-global");
+    const prev = document.getElementById("fanPrev");
+    const next = document.getElementById("fanNext");
+    if (!strip || !prev || !next) return;
+
+    const maxScrollLeft = Math.max(0, strip.scrollWidth - strip.clientWidth);
+    const hasOverflow = maxScrollLeft > 2;
+    const atStart = strip.scrollLeft <= 2;
+    const atEnd = strip.scrollLeft >= (maxScrollLeft - 2);
+
+    if (!hasOverflow) {
+        prev.style.visibility = "hidden";
+        next.style.visibility = "hidden";
+        prev.style.pointerEvents = "none";
+        next.style.pointerEvents = "none";
+        return;
+    }
+
+    prev.style.visibility = atStart ? "hidden" : "visible";
+    next.style.visibility = atEnd ? "hidden" : "visible";
+    prev.style.pointerEvents = atStart ? "none" : "auto";
+    next.style.pointerEvents = atEnd ? "none" : "auto";
+}
+
+function initFanCarouselNav() {
+    const strip = document.getElementById("container-global");
+    const prev = document.getElementById("fanPrev");
+    const next = document.getElementById("fanNext");
+    if (!strip || !prev || !next) return;
+
+    const scrollByCards = () => Math.max(260, Math.floor(strip.clientWidth * 0.8));
+
+    prev.addEventListener("click", () => {
+        strip.scrollBy({ left: -scrollByCards(), behavior: "smooth" });
+        window.setTimeout(updateFanCarouselNavState, 220);
+    });
+
+    next.addEventListener("click", () => {
+        strip.scrollBy({ left: scrollByCards(), behavior: "smooth" });
+        window.setTimeout(updateFanCarouselNavState, 220);
+    });
+
+    strip.addEventListener("scroll", updateFanCarouselNavState, { passive: true });
+    window.addEventListener("resize", updateFanCarouselNavState);
+    updateFanCarouselNavState();
+}
+
 // 5. INITIALIZATION
 document.addEventListener("DOMContentLoaded", () => {
     setupNavigation();
+    initFanCarouselNav();
     loadDailyRecommendations();
 });
-
-// Auto-refresh recommendations every 5 minutes
-setInterval(loadDailyRecommendations, 5 * 60 * 1000);
 
 function buildSelectedContent(item) {
     const pickNumericId = (...values) => {
@@ -227,4 +364,71 @@ function buildSelectedContent(item) {
 function openDetailPage(item) {
     sessionStorage.setItem('selectedContent', JSON.stringify(buildSelectedContent(item)));
     window.location.href = "detail.html";
+}
+
+function renderGenreSections(data) {
+    const sections = Array.isArray(data.genre_sections) ? data.genre_sections : [];
+    const headerGenre = document.getElementById("header-genre");
+    const extraWrapper = document.getElementById("genre-sections-extra");
+
+    if (!sections.length) {
+        renderSection("container-genre", (data.genre_highlights || []).map(normalizeItem));
+        if (headerGenre && data.genre_name) {
+            const cleanGenre = data.genre_name.charAt(0).toUpperCase() + data.genre_name.slice(1);
+            headerGenre.innerHTML = `Explore <span class="gold-accent">${cleanGenre}</span>`;
+        }
+        if (extraWrapper) extraWrapper.innerHTML = "";
+        return;
+    }
+
+    const primarySection = sections[0] || {};
+    const primaryName = primarySection.genre_name || data.genre_name || "Trending";
+    if (headerGenre) {
+        headerGenre.innerHTML = `Explore <span class="gold-accent">${primaryName}</span>`;
+    }
+    renderSection("container-genre", (primarySection.items || []).map(normalizeItem));
+
+    if (!extraWrapper) return;
+    extraWrapper.innerHTML = "";
+
+    sections.slice(1).forEach((section) => {
+        const title = section.genre_name || section.genre || "Genre Picks";
+        const sectionHeader = document.createElement("h1");
+        sectionHeader.innerHTML = `Explore <span class="gold-accent">${title}</span>`;
+
+        const sectionBox = document.createElement("div");
+        sectionBox.className = "box";
+
+        const items = (section.items || []).map(normalizeItem);
+        if (!items.length) {
+            sectionBox.innerHTML = '<p class="loading">No matches found for this category.</p>';
+        } else {
+            const tmdbBaseUrl = "https://image.tmdb.org/t/p/w500";
+            items.forEach((item) => {
+                const anchor = document.createElement("a");
+                anchor.href = "#";
+                anchor.className = "rec-link";
+
+                const img = document.createElement("img");
+                const imagePath = item.poster_url || item.image || "";
+                img.src = imagePath
+                    ? (imagePath.startsWith("http") ? imagePath : `${tmdbBaseUrl}${imagePath}`)
+                    : "assests/LuminaLogo.png";
+                img.alt = item.title || "Content";
+                img.loading = "lazy";
+
+                anchor.appendChild(img);
+                anchor.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    sessionStorage.setItem("selectedContent", JSON.stringify(normalizeItem(item)));
+                    window.location.href = "detail.html";
+                });
+
+                sectionBox.appendChild(anchor);
+            });
+        }
+
+        extraWrapper.appendChild(sectionHeader);
+        extraWrapper.appendChild(sectionBox);
+    });
 }

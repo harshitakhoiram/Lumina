@@ -1,16 +1,20 @@
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lumina - Content Details</title>
-    <link rel="stylesheet" href="assests/css/auth.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="assests/css/dashboard.css">
     <link rel="stylesheet" href="assests/css/detail.css">
     <script defer src="assests/js/detail.js"></script>
     <script src="assests/js/api.js"></script>
-    
-    
+
+
 </head>
+
 <body class="redesign">
     <div id="wrapper">
         <header class="main-header">
@@ -21,20 +25,20 @@
             </div>
             <div class="search-section">
                 <div class="search-wrapper">
-                    <i class="fas fa-search"></i>
+                    <span class="search-icon" aria-hidden="true">Search</span>
                     <input type="text" placeholder="Search within Lumina..." id="navbar-query">
                 </div>
             </div>
             <div class="user-section">
-                <a href="dashboard.html" class="nav-link"><i class="fas fa-home"></i> Home</a>
-                <div class="profile-circle"><i class="fas fa-user"></i></div>
+                <a href="dashboard.html" class="nav-link">Home</a>
+                <div class="profile-circle"><span aria-hidden="true">U</span></div>
             </div>
         </header>
 
         <div id="pagecontent" class="pagecontent">
             <div id="content-2-wide" class="flatland">
                 <div id="main_top" class="main">
-                    
+
                     <div class="title-overview">
                         <div id="title-overview-widget" class="heroic-overview">
                             <div class="vital">
@@ -43,14 +47,16 @@
                                         <div class="ratings_wrapper">
                                             <div class="imdbRating">
                                                 <div class="ratingValue">
-                                                    <strong><span id="dynRating">-</span></strong><span class="grey">/10</span>
+                                                    <strong><span id="dynRating">-</span></strong><span
+                                                        class="grey">/10</span>
                                                 </div>
                                                 <a href="#"><span class="small" id="dynVoteCount">0</span> votes</a>
                                             </div>
                                         </div>
                                         <div class="titleBar">
                                             <div class="title_wrapper">
-                                                <h1 itemprop="name" id="dynTitle">Loading Title... <span id="titleYear" class="grey">(2026)</span></h1>
+                                                <h1 itemprop="name" id="dynTitle">Loading Title... <span id="titleYear"
+                                                        class="grey">(2026)</span></h1>
                                                 <div class="subtext">
                                                     <span id="dynRatingType">M</span> <span class="ghost">|</span>
                                                     <time id="dynRuntime">0 min</time> <span class="ghost">|</span>
@@ -87,7 +93,7 @@
                     <div class="article" id="titleCast">
                         <h2>Cast</h2>
                         <table class="cast_list" id="dynCastTable">
-                            </table>
+                        </table>
                     </div>
 
                     <div id="titleDidYouKnow" class="article">
@@ -105,11 +111,20 @@
                         <div class="widget_image">
                             <img id="sidebarImage" src="assests/LuminaLogo.png" style="width:100%">
                         </div>
-                        <p class="blurb">Based on your interest in this title, our AI suggests checking out the full collection.</p>
+                        <p class="blurb">Based on your interest in this title, our AI suggests checking out the full
+                            collection.</p>
+                    </div>
+
+                    <div class="mini-article">
+                        <h3>Similar Vibe</h3>
+                        <div id="similarVibeContainer" class="similar-vibe-list">
+                            <p class="loading-mini">Finding similar matches...</p>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </body>
+
 </html>

@@ -74,7 +74,7 @@ def save_profile(
             "user_id": user_id,
             "interest": body.interest,
             "language": body.language,
-            "genre": body.genre,
+            "genre": body.genre, # This will be passed as a list if DB column is TEXT[] or string/comma-join it
             "selected_titles": body.selectedTitles,
             "selected_actors": body.selectedActors,
             "favorite_content": body.favoriteContent

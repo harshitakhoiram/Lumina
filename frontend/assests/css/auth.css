@@ -56,7 +56,7 @@ body {
 .start-content-container {
     position: relative;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
     height: 800px;
     background: url("/frontend/assests/bg.png") no-repeat;
@@ -81,6 +81,7 @@ body {
 .start-content {
     text-align: center;
     width: 750px;
+    margin-top: 150px;
 }
 
 .header-text { font-size: 62px; }
@@ -257,6 +258,7 @@ body {
     .faq-header { font-size: 20px; }
     .footer-ul { grid-template-columns: repeat(3, 1fr); width: 100%; }
     .footer { width: 90%; }
+    .start-content { margin-top: 120px; }
 }
 
 @media only screen and (max-width: 668px) {
@@ -266,4 +268,5 @@ body {
     .questions-header { font-size: 30px; }
     .logo img { width: 150px; }
     .footer-ul { grid-template-columns: repeat(2, 1fr); }
+    .start-content { margin-top: 90px; }
 }

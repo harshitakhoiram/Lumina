@@ -96,44 +96,82 @@ def upsert_items(db, items: list[dict], content_type: str, genre_map: dict[int, 
         inserted += 1
     return inserted
 
-def ingest_movies(target: int = 500):
+def ingest_movies(
+    target: int = 500,
+    original_language: str | None = None,
+    sort_by: str = "popularity.desc",
+    vote_count_gte: int | None = None,
+):
     movie_genres = fetch_genre_map("movie")
     db = SessionLocal()
     try:
         total = 0
         page = 1
+        lang_label = original_language or "all"
         while total < target:
-            data = tmdb_get("/discover/movie", params={"sort_by": "popularity.desc", "page": page, "language": "en-US"})
+            params = {
+                "sort_by": sort_by,
+                "page": page,
+                "language": "en-US",
+            }
+            if original_language:
+                params["with_original_language"] = original_language
+            if vote_count_gte is not None:
+                params["vote_count.gte"] = vote_count_gte
+
+            data = tmdb_get("/discover/movie", params=params)
             items = data.get("results", [])
             if not items:
                 break
             total += upsert_items(db, items, "MOVIE", movie_genres, title_key="title", date_key="release_date")
             db.commit()
-            print(f"[TMDB] Movies page={page} total_upserted={total}")
+            print(f"[TMDB] Movies lang={lang_label} sort={sort_by} page={page} total_upserted={total}")
             page += 1
-        print(f"[TMDB] Movies done. Upserted ~{total}")
+        print(f"[TMDB] Movies done lang={lang_label} sort={sort_by}. Upserted ~{total}")
     finally:
         db.close()
 
-def ingest_series(target: int = 300):
+def ingest_series(
+    target: int = 300,
+    original_language: str | None = None,
+    sort_by: str = "popularity.desc",
+    vote_count_gte: int | None = None,
+):
     tv_genres = fetch_genre_map("tv")
     db = SessionLocal()
     try:
         total = 0
         page = 1
+        lang_label = original_language or "all"
         while total < target:
-            data = tmdb_get("/discover/tv", params={"sort_by": "popularity.desc", "page": page, "language": "en-US"})
+            params = {
+                "sort_by": sort_by,
+                "page": page,
+                "language": "en-US",
+            }
+            if original_language:
+                params["with_original_language"] = original_language
+            if vote_count_gte is not None:
+                params["vote_count.gte"] = vote_count_gte
+
+            data = tmdb_get("/discover/tv", params=params)
             items = data.get("results", [])
             if not items:
                 break
             total += upsert_items(db, items, "SERIES", tv_genres, title_key="name", date_key="first_air_date")
             db.commit()
-            print(f"[TMDB] Series page={page} total_upserted={total}")
+            print(f"[TMDB] Series lang={lang_label} sort={sort_by} page={page} total_upserted={total}")
             page += 1
-        print(f"[TMDB] Series done. Upserted ~{total}")
+        print(f"[TMDB] Series done lang={lang_label} sort={sort_by}. Upserted ~{total}")
     finally:
         db.close()
 
 if __name__ == "__main__":
-    ingest_movies(target=500)
-    ingest_series(target=300)
+    # Broad pool across all languages.
+    ingest_movies(target=500, sort_by="popularity.desc", vote_count_gte=50)
+    ingest_series(target=300, sort_by="popularity.desc", vote_count_gte=30)
+
+    # Hindi-focused pools for stronger non-English personalization.
+    ingest_movies(target=300, original_language="hi", sort_by="popularity.desc", vote_count_gte=5)
+    ingest_movies(target=200, original_language="hi", sort_by="primary_release_date.desc", vote_count_gte=0)
+    ingest_series(target=120, original_language="hi", sort_by="popularity.desc", vote_count_gte=0)
