@@ -30,46 +30,174 @@
   const interestSelect = document.getElementById("interestSelect");
   const conditionalBlock = document.getElementById("conditionalDevBlock");
   const hintSpan = document.getElementById("hintText");
-  const languageRadios = Array.from(document.querySelectorAll('input[name="language"]'));
+  const languageContainer = document.getElementById("languageOptions");
   const genreContainer = document.getElementById("genreOptions");
   const genreLabel = document.getElementById("genreLabel");
   const genreHint = document.getElementById("genreHint");
+  const API_BASE = (window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost") ? "http://127.0.0.1:8000" : "https://your-backend.onrender.com";
+
+  function buildApiUrl(path, params = {}) {
+    const query = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (value === undefined || value === null || value === '') return;
+      query.set(key, String(value));
+    });
+    return `${API_BASE}${path}${query.size ? `?${query.toString()}` : ''}`;
+  }
+
+  async function readErrorMessage(response, fallbackMessage) {
+    try {
+      const data = await response.json();
+      if (typeof data?.detail === 'string' && data.detail.trim()) {
+        return data.detail;
+      }
+      if (typeof data?.message === 'string' && data.message.trim()) {
+        return data.message;
+      }
+    } catch (_) {
+      // Ignore JSON parse issues and fall back to status text.
+    }
+
+    return `${fallbackMessage} (${response.status})`;
+  }
 
   // genre definitions
-  const videoGenres = [
+  const fallbackVideoGenres = [
     { value: 'action', label: 'Action' },
     { value: 'drama', label: 'Drama' },
     { value: 'comedy', label: 'Comedy' },
     { value: 'sci-fi', label: 'Sci‑Fi' }
   ];
-  const bookGenres = [
+  const fallbackBookGenres = [
     { value: 'fiction', label: 'Fiction' },
     { value: 'nonfiction', label: 'Non‑fiction' },
     { value: 'mystery', label: 'Mystery' },
     { value: 'fantasy', label: 'Fantasy' }
   ];
   let genreRadios = [];
+  const optionsCache = { video: null, books: null };
+  const allowedOnboardingLanguages = [
+    'en', 'fr', 'de', 'zh', 'ja', 'kn', 'hi', 'te', 'ta', 'ml', 'es', 'ko', 'th'
+  ];
 
   // movie/book data sample
-  let selectedLanguage = 'en';
-  // placeholder actor data (would come from API based on previous selections)
-  const sampleActors = ['Robert Downey Jr.', 'Scarlett Johansson', 'Leonardo DiCaprio', 'Meryl Streep', 'Denzel Washington'];
-  const sampleItems = {
-    video: {
-      action: ['Die Hard', 'Mad Max', 'John Wick', 'The Matrix', 'Gladiator'],
-      drama: ['Forrest Gump', 'The Shawshank Redemption', 'Moonlight', 'No Country for Old Men', 'The Godfather'],
-      comedy: ['Superbad', 'Step Brothers', 'The Big Lebowski', 'Groundhog Day', 'Anchorman'],
-      'sci-fi': ['Inception', 'Interstellar', 'Blade Runner', 'Arrival', 'Ex Machina']
-    },
-    books: {
-      fiction: ['1984', 'Pride and Prejudice', 'The Great Gatsby', 'To Kill a Mockingbird', 'The Hobbit'],
-      nonfiction: ['Sapiens', 'Educated', 'Becoming', 'The Wright Brothers', 'The Immortal Life of Henrietta Lacks'],
-      mystery: ['Gone Girl', 'The Girl with the Dragon Tattoo', 'Sherlock Holmes', 'Big Little Lies', 'In the Woods'],
-      fantasy: ['Harry Potter', 'The Name of the Wind', 'The Way of Kings', 'Mistborn', 'The Lies of Locke Lamora']
-    }
-  };
-
+  let selectedLanguages = ['en'];
   let selectedItems = new Set();
+
+  function getLanguageInputs() {
+    return Array.from(document.querySelectorAll('input[name="language"]'));
+  }
+
+  function languageLabel(code) {
+    const key = String(code || '').trim().toLowerCase();
+    if (!key) return 'Unknown';
+
+    // Normalize common non-standard values seen in dataset.
+    const aliases = {
+      cn: 'zh',
+      jp: 'ja',
+      kr: 'ko'
+    };
+    const normalized = aliases[key] || key;
+
+    const manual = {
+      en: 'English', hi: 'Hindi', es: 'Spanish', fr: 'French', ta: 'Tamil', te: 'Telugu',
+      ml: 'Malayalam', kn: 'Kannada', bn: 'Bengali', mr: 'Marathi', de: 'German', it: 'Italian',
+      pt: 'Portuguese', ja: 'Japanese', ko: 'Korean', zh: 'Chinese', ru: 'Russian', ar: 'Arabic',
+      he: 'Hebrew', no: 'Norwegian', et: 'Estonian', fi: 'Finnish', af: 'Afrikaans', cs: 'Czech',
+      lv: 'Latvian', pl: 'Polish', sr: 'Serbian', th: 'Thai', tl: 'Tagalog', tr: 'Turkish'
+    };
+
+    let name = manual[normalized] || '';
+    if (!name && typeof Intl !== 'undefined' && Intl.DisplayNames) {
+      try {
+        const display = new Intl.DisplayNames(['en'], { type: 'language' });
+        name = display.of(normalized) || '';
+      } catch (_) {
+        name = '';
+      }
+    }
+
+    if (!name) {
+      name = normalized.toUpperCase();
+    }
+
+    return name;
+  }
+
+  function onLanguageChange(changedInput = null) {
+    const inputs = getLanguageInputs();
+    const selected = inputs.filter(i => i.checked).map(i => i.value);
+    if (!selected.length && changedInput) {
+      changedInput.checked = true;
+      return;
+    }
+
+    selectedLanguages = selected.length ? selected : ['en'];
+    userPrefs.languages = [...selectedLanguages];
+    userPrefs.language = selectedLanguages[0] || 'en';
+    if (currentStep === 4) renderGrid();
+  }
+
+  function renderLanguageOptions(languages) {
+    // API returns [{value, label}, ...]; normalize to code strings
+    const normalize = (lang) => String(lang?.value || lang || '').trim().toLowerCase();
+    const dbSet = new Set(
+      (Array.isArray(languages) && languages.length ? languages : []).map(normalize)
+    );
+    const previous = new Set(selectedLanguages);
+    // Only show languages from our curated list; if db has data, further
+    // restrict to those present in db (skip restriction if db returned nothing).
+    const curated = dbSet.size > 0
+      ? allowedOnboardingLanguages.filter((code) => dbSet.has(code))
+      : [...allowedOnboardingLanguages];
+
+    languageContainer.innerHTML = '';
+    curated.forEach((langCode) => {
+      const code = String(langCode || '').trim().toLowerCase();
+      if (!code) return;
+      const label = document.createElement('label');
+      label.className = 'radio-option';
+      label.innerHTML = `<input type="checkbox" name="language" value="${code}"> <span>${languageLabel(code)}</span>`;
+      languageContainer.appendChild(label);
+    });
+
+    const inputs = getLanguageInputs();
+    inputs.forEach((input) => {
+      input.checked = previous.has(input.value) || (!previous.size && input.value === 'en');
+      input.addEventListener('change', () => onLanguageChange(input));
+    });
+
+    if (!inputs.some(i => i.checked) && inputs.length) {
+      inputs[0].checked = true;
+    }
+    onLanguageChange();
+  }
+
+  async function loadDynamicOptionsForInterest(interest) {
+    if (!interest) return;
+    if (!optionsCache[interest]) {
+      try {
+        const response = await fetch(buildApiUrl('/discovery/onboarding/options', { type: interest }));
+        if (response.ok) {
+          optionsCache[interest] = await response.json();
+        }
+      } catch (error) {
+        console.warn('Failed to load onboarding options', error);
+      }
+    }
+
+    const options = optionsCache[interest] || {};
+    const genres = Array.isArray(options.genres) && options.genres.length
+      ? options.genres
+      : (interest === 'books' ? fallbackBookGenres : fallbackVideoGenres);
+    const languages = Array.isArray(options.languages) && options.languages.length
+      ? options.languages
+      : allowedOnboardingLanguages;
+
+    renderGenres(genres);
+    renderLanguageOptions(languages);
+  }
 
   // user preferences object to track all selections across steps
   const userPrefs = {
@@ -77,7 +205,8 @@
     email: null,              // step1 (prefilled from landing)
     password: null,           // step1
     interest: null,           // step 2: 'video' or 'books'
-    language: null,           // step 3: selected language
+    language: null,           // step 3: legacy primary language
+    languages: [],            // step 3: selected languages
     genre: [],                // step 3: selected genres (ARRAY)
     selectedTitles: [],       // step 4: array of selected movie/book titles
     selectedActors: [],       // step 5: array of selected actors/authors
@@ -97,8 +226,10 @@
     } else if (currentStep === 2) {
       userPrefs.interest = interestSelect.value;
     } else if (currentStep === 3) {
-      const selectedLang = languageRadios.find(r => r.checked);
-      if (selectedLang) userPrefs.language = selectedLang.value;
+      const selectedLangs = getLanguageInputs().filter(r => r.checked).map(r => r.value);
+      selectedLanguages = selectedLangs.length ? selectedLangs : ['en'];
+      userPrefs.languages = [...selectedLanguages];
+      userPrefs.language = selectedLanguages[0] || 'en';
       const selectedGenres = Array.from(document.querySelectorAll('input[name="genre"]:checked')).map(cb => cb.value);
       userPrefs.genre = selectedGenres;
     } else if (currentStep === 4) {
@@ -119,8 +250,6 @@
     try {
       nextBtn.disabled = true; // Prevent double clicks
       nextBtn.innerHTML = `Finishing... <i class="fas fa-spinner fa-spin"></i>`;
-
-      const API_BASE = (window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost") ? "http://localhost:8000" : "https://your-backend.onrender.com";
 
       // Step A: Try Sign up
       let signupResp = await fetch(`${API_BASE}/auth/signup`, {
@@ -168,6 +297,7 @@
       const profilePayload = {
         interest: userPrefs.interest,
         language: userPrefs.language,
+        languages: userPrefs.languages,
         genre: userPrefs.genre,
         selectedTitles: userPrefs.selectedTitles,
         selectedActors: userPrefs.selectedActors,
@@ -252,12 +382,13 @@
   // conditional + hint update (conversational logic)
   // build genre radio inputs for given list
   function renderGenres(list) {
+    const prevSelected = new Set(userPrefs.genre || []);
     genreContainer.innerHTML = '';
-    list.forEach((g, idx) => {
+    list.forEach((g) => {
       const label = document.createElement('label');
-      label.className = 'checkbox-option'; // Changed from radio-option for clarity
+      label.className = 'radio-option';
       label.innerHTML = `
-        <input type="checkbox" name="genre" value="${g.value}"> <span>${g.label}</span>
+        <input type="checkbox" name="genre" value="${g.value}" ${prevSelected.has(g.value) ? 'checked' : ''}> <span>${g.label}</span>
       `;
       genreContainer.appendChild(label);
     });
@@ -265,6 +396,8 @@
     // if user is already on the grid step, changing genre should refresh titles
     genreRadios.forEach(r => {
       r.addEventListener('change', () => {
+        userPrefs.genre = Array.from(document.querySelectorAll('input[name="genre"]:checked')).map(cb => cb.value);
+        updateConditionalAndHint();
         if (currentStep === 4) renderGrid();
       });
     });
@@ -278,16 +411,10 @@
       conditionalBlock.classList.add("hidden-step");
     }
 
-    // render appropriate genres
-    if (genreContainer.innerHTML.trim() === "" || userPrefs.interest !== interest) {
-      if (interest === 'video') {
-        genreLabel.innerHTML = '<i class="fas fa-star"></i> favorite genre?';
-        renderGenres(videoGenres);
-      } else if (interest === 'books') {
-        genreLabel.innerHTML = '<i class="fas fa-book"></i> favorite book genre?';
-        renderGenres(bookGenres);
-      }
-      userPrefs.interest = interest; // Sync the state
+    if (interest === 'video') {
+      genreLabel.innerHTML = '<i class="fas fa-star"></i> favorite genre?';
+    } else if (interest === 'books') {
+      genreLabel.innerHTML = '<i class="fas fa-book"></i> favorite book genre?';
     }
 
     // smart hint in step3
@@ -304,17 +431,12 @@
 
   // listeners
   interestSelect.addEventListener("change", () => {
+    userPrefs.interest = interestSelect.value;
+    loadDynamicOptionsForInterest(userPrefs.interest);
     updateConditionalAndHint();
     // when type changes, clear previous selections
     selectedItems.clear();
     if (currentStep === 4) renderGrid();
-  });
-  languageRadios.forEach(r => {
-    r.addEventListener('change', () => {
-      selectedLanguage = r.value;
-      // if we're already choosing titles, re-fetch with the new language
-      if (currentStep === 4) renderGrid();
-    });
   });
 
   // enable next button in step1 when all fields are populated
@@ -370,8 +492,6 @@
     grid.innerHTML = '<div class="loading">✨ Finding your possible favs...</div>';
     selectedItems.clear();
 
-    const API_BASE = (window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost") ? "http://localhost:8000" : "https://your-backend.onrender.com";
-
     try {
       const response = await fetch(`${API_BASE}/discovery/onboarding/people`, {
         method: 'POST',
@@ -379,10 +499,14 @@
         body: JSON.stringify({
           titles: Array.from(userPrefs.selectedTitles),
           genres: userPrefs.genre.join(','), // Pass selected genres
-          lang: selectedLanguage,
+          lang: selectedLanguages.join(','),
           type: interest
         })
       });
+
+      if (!response.ok) {
+        throw new Error(await readErrorMessage(response, 'Could not load people'));
+      }
 
       const data = await response.json();
       const peopleList = data.people || [];
@@ -411,7 +535,7 @@
       });
     } catch (err) {
       console.error("People fetch error:", err);
-      grid.innerHTML = '<p class="error">Could not load people.</p>';
+      grid.innerHTML = `<p class="error">${err.message || 'Could not load people.'}</p>`;
     }
   }
 
@@ -420,16 +544,22 @@
     const interest = interestSelect.value;
     const selectedGenres = Array.from(document.querySelectorAll('input[name="genre"]:checked')).map(cb => cb.value);
     const genre = selectedGenres.join(','); // Pass as comma-separated
-    const lang = selectedLanguage;
+    const lang = selectedLanguages.join(',');
 
     grid.innerHTML = '<div class="loading">✨ Curating your matches...</div>';
     selectedItems.clear();
 
-    // Use the dynamic BASE URL for local/production
-    const API_BASE = (window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost") ? "http://localhost:8000" : "https://your-backend.onrender.com";
-
     try {
-      const res = await fetch(`${API_BASE}/discovery/onboarding/items?type=${interest}&genre=${genre}&lang=${lang}`);
+      const res = await fetch(buildApiUrl('/discovery/onboarding/items', {
+        type: interest,
+        genre,
+        lang
+      }));
+
+      if (!res.ok) {
+        throw new Error(await readErrorMessage(res, 'Could not load titles'));
+      }
+
       const data = await res.json();
       const list = data.items;
 
@@ -462,7 +592,7 @@
       });
     } catch (err) {
       console.error("Fetch error:", err);
-      grid.innerHTML = '<p class="error">Connection failed. Is the backend running?</p>';
+      grid.innerHTML = `<p class="error">${err.message || 'Connection failed. Is the backend running?'}</p>`;
     }
   }
   function updateNextState() {
@@ -498,6 +628,9 @@
 
   // init
   showStep(1);
-  updateConditionalAndHint();
+  userPrefs.interest = interestSelect.value;
+  loadDynamicOptionsForInterest(userPrefs.interest).then(() => {
+    updateConditionalAndHint();
+  });
   updateNextState();
 })();

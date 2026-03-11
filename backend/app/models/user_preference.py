@@ -10,6 +10,7 @@ class UserPreference(Base):
     user_id = Column(Text, ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
     interest = Column(Text)
     language = Column(Text)
+    languages = Column(ARRAY(Text), server_default=text("ARRAY[]::TEXT[]"))
     genre = Column(ARRAY(Text))
     selected_titles = Column(ARRAY(Text))
     selected_actors = Column(ARRAY(Text))

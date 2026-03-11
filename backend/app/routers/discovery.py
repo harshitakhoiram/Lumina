@@ -13,6 +13,74 @@ import random
 security = HTTPBearer()
 router = APIRouter(prefix="/discovery", tags=["Discovery"])
 
+# Curated clean genre lists per content type
+_VIDEO_GENRES = [
+    {"value": "action", "label": "Action"},
+    {"value": "drama", "label": "Drama"},
+    {"value": "comedy", "label": "Comedy"},
+    {"value": "sci-fi", "label": "Sci-Fi"},
+    {"value": "mystery", "label": "Mystery"},
+    {"value": "fantasy", "label": "Fantasy"},
+    {"value": "romance", "label": "Romance"},
+    {"value": "horror", "label": "Horror"},
+    {"value": "animation", "label": "Animation"},
+    {"value": "thriller", "label": "Thriller"},
+    {"value": "documentary", "label": "Documentary"},
+    {"value": "war", "label": "War"},
+    {"value": "crime", "label": "Crime"},
+]
+
+_BOOK_GENRES = [
+    {"value": "fiction", "label": "Fiction"},
+    {"value": "fantasy", "label": "Fantasy"},
+    {"value": "mystery", "label": "Mystery"},
+    {"value": "science fiction", "label": "Science Fiction"},
+    {"value": "romance", "label": "Romance"},
+    {"value": "thriller", "label": "Thriller"},
+    {"value": "horror", "label": "Horror"},
+    {"value": "biography", "label": "Biography"},
+    {"value": "history", "label": "History"},
+    {"value": "science", "label": "Science"},
+]
+
+_LANG_LABELS = {
+    "en": "English", "hi": "Hindi", "es": "Spanish", "fr": "French",
+    "ta": "Tamil", "te": "Telugu", "ml": "Malayalam", "kn": "Kannada",
+    "bn": "Bengali", "mr": "Marathi", "de": "German", "it": "Italian",
+    "pt": "Portuguese", "ja": "Japanese", "ko": "Korean", "zh": "Chinese",
+    "ru": "Russian", "ar": "Arabic", "th": "Thai", "tr": "Turkish",
+    "id": "Indonesian", "tl": "Filipino", "he": "Hebrew", "no": "Norwegian",
+    "fi": "Finnish", "pl": "Polish", "cs": "Czech", "sr": "Serbian",
+    "lv": "Latvian", "af": "Afrikaans", "et": "Estonian",
+}
+
+
+@router.get("/onboarding/options")
+async def get_onboarding_options(
+    type: str = Query("video", description="video or books"),
+    db: Session = Depends(get_db)
+):
+    """Return all available languages and genres from the content DB."""
+    lang_rows = db.execute(
+        text("SELECT DISTINCT language FROM content WHERE language IS NOT NULL AND language != '' ORDER BY language")
+    ).fetchall()
+    db_langs = [r[0] for r in lang_rows if r[0]]
+
+    languages = []
+    for code in db_langs:
+        label = _LANG_LABELS.get(code)
+        if not label:
+            try:
+                from babel import Locale
+                label = Locale.parse(code).get_display_name("en") or code.upper()
+            except Exception:
+                label = code.upper()
+        languages.append({"value": code, "label": label})
+
+    genres = _VIDEO_GENRES if type == "video" else _BOOK_GENRES
+    return {"languages": languages, "genres": genres}
+
+
 # --- MOVIE ENDPOINTS ---
 
 @router.get("/onboarding/items")
@@ -22,11 +90,26 @@ async def get_onboarding_items(
     lang: str = Query("en")
 ):
     if type == "video":
-        items = await movie_service.search_by_genre_lang(genre, lang)
-        random.shuffle(items)
-        return {"items": items}
+        lang_codes = [l.strip() for l in lang.split(',') if l.strip()] or ['en']
+        all_items: list = []
+        seen_ids: set = set()
+        for lc in lang_codes:
+            batch = await movie_service.search_by_genre_lang(genre, lc, limit=12)
+            for item in batch:
+                iid = str(item.get("id") or "")
+                if iid and iid in seen_ids:
+                    continue
+                if iid:
+                    seen_ids.add(iid)
+                all_items.append(item)
+        if not all_items:
+            all_items = await movie_service.search_by_genre_lang(genre, 'en')
+        random.shuffle(all_items)
+        return {"items": all_items}
     if type == "books":
         items = await book_service.search_by_genre_lang(genre, lang)
+        if not items and lang.lower() != 'en':
+            items = await book_service.search_by_genre_lang(genre, 'en')
         random.shuffle(items)
         return {"items": items}
     return {"items": []}
@@ -39,7 +122,20 @@ async def get_onboarding_people(payload: dict):
     interest = payload.get("type", "video")
     
     if interest == "video":
-        people = await movie_service.get_popular_people_by_genre(genres, lang)
+        lang_codes = [l.strip() for l in lang.split(',') if l.strip()] or ['en']
+        all_people: list = []
+        seen_names: set = set()
+        for lc in lang_codes:
+            batch = await movie_service.get_popular_people_by_genre(genres, lc)
+            for p in batch:
+                nm = p.get("name", "")
+                if nm in seen_names:
+                    continue
+                seen_names.add(nm)
+                all_people.append(p)
+        import random as _rnd
+        _rnd.shuffle(all_people)
+        people = all_people[:15]
     else:
         people = await book_service.get_authors_from_titles(titles, lang)
     return {"people": people}

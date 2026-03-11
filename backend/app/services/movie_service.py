@@ -138,18 +138,36 @@ class MovieService:
         # easily return empty sets for multi-genre onboarding selections.
         for genre_id in genre_ids:
             for sort_by in sort_options:
-                for offset in range(0, 4):
-                    page = start_page + offset
-                    params = {
-                        "with_genres": genre_id,
-                        "with_original_language": lang,
-                        "language": "en-US",
-                        "sort_by": sort_by,
-                        "page": page,
-                        "vote_count.gte": vote_floor,
-                    }
+                # First, probe page 1 to find total_pages for this query,
+                # then rotate within the valid range to avoid empty-page errors
+                # for smaller language pools (e.g. Malayalam only has 2-5 pages).
+                probe_params = {
+                    "with_genres": genre_id,
+                    "with_original_language": lang,
+                    "language": "en-US",
+                    "sort_by": sort_by,
+                    "page": 1,
+                    "vote_count.gte": vote_floor,
+                }
+                probe = await self._make_request(url, params=probe_params)
+                total_pages = max(1, min((probe or {}).get("total_pages", 1), 500))
+                clamped_start = ((start_page - 1) % total_pages) + 1
 
-                    data = await self._make_request(url, params=params)
+                for offset in range(0, min(4, total_pages)):
+                    page = ((clamped_start - 1 + offset) % total_pages) + 1
+                    if page == 1 and offset == 0:
+                        # reuse probe data
+                        data = probe
+                    else:
+                        params = {
+                            "with_genres": genre_id,
+                            "with_original_language": lang,
+                            "language": "en-US",
+                            "sort_by": sort_by,
+                            "page": page,
+                            "vote_count.gte": vote_floor,
+                        }
+                        data = await self._make_request(url, params=params)
                     if not data:
                         continue
 
@@ -333,6 +351,16 @@ class MovieService:
             "cast": credits.get("cast", [])[:10]  # First 10 cast members
         }
     
+    async def search_person_image(self, name: str) -> str | None:
+        """Search TMDB for a person by name and return their profile image URL."""
+        url = f"{self.base_url}/search/person"
+        data = await self._make_request(url, params={"query": name})
+        if data and data.get("results"):
+            person = data["results"][0]
+            if person.get("profile_path"):
+                return f"https://image.tmdb.org/t/p/w185{person['profile_path']}"
+        return None
+
     def _format_movie_data(self, results, content_type=None):
         return [
             {

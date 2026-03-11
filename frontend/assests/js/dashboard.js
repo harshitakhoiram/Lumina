@@ -172,24 +172,45 @@ function renderHero() {
         finalImageUrl = imagePath.startsWith('http') ? imagePath : `${tmdbBaseUrl}${imagePath}`;
     }
 
+    const overview = item.overview
+        ? `${item.overview.substring(0, 220)}${item.overview.length > 220 ? '...' : ''}`
+        : 'Discover your next favorite on Lumina.';
+    const contentType = String(item.content_type || 'movie').toLowerCase();
+    const typeLabel = contentType === 'series' ? 'Series Pick' : 'Movie Pick';
+
     display.innerHTML = `
         <div class="hero-slide active" style="background-image: url('${finalImageUrl}');">
-            <div class="hero-info-box">
-                <h2 class="gold-accent">${item.title || "Featured Content"}</h2>
-                <p>${item.overview ? item.overview.substring(0, 160) + '...' : 'Discover your next favorite on Lumina.'}</p>
-                <button id="heroKnowMore" class="nav-btn-header" style="background: var(--accent); color: black; border: none; font-weight: bold; margin-top: 15px;">
-                    Know More
-                </button>
+            <div class="hero-overlay"></div>
+            <div class="hero-content">
+                <div class="hero-poster-wrap">
+                    <img class="hero-poster" src="${finalImageUrl}" alt="${item.title || 'Featured'}" onerror="this.src='assests/LuminaLogo.png'">
+                </div>
+                <div class="hero-info-box">
+                    <div class="hero-meta-row">
+                        <span class="hero-chip">${typeLabel}</span>
+                        <span class="hero-chip">${item.rating ? `Rating ${item.rating}/10` : 'Personalized'}</span>
+                    </div>
+                    <h2 class="gold-accent">${item.title || "Featured Content"}</h2>
+                    <p>${overview}</p>
+                    <div class="hero-action-row">
+                        <button id="heroKnowMore" class="hero-cta-btn">Know More</button>
+                        <button id="heroWatchlist" class="hero-ghost-btn">+ Watchlist</button>
+                    </div>
+                </div>
             </div>
         </div>
     `;
 
     const knowMoreBtn = document.getElementById("heroKnowMore");
+    const watchlistBtn = document.getElementById("heroWatchlist");
     if (knowMoreBtn) {
         knowMoreBtn.addEventListener("click", () => {
             sessionStorage.setItem("selectedContent", JSON.stringify(normalizeItem(item)));
             window.location.href = "detail.html";
         });
+    }
+    if (watchlistBtn) {
+        watchlistBtn.addEventListener("click", () => addItemToWatchlist(normalizeItem(item)));
     }
 }
 
@@ -280,6 +301,8 @@ function renderSection(containerId, items) {
 
     items.forEach((raw) => {
         const item = normalizeItem(raw);
+        const card = document.createElement("div");
+        card.className = "rec-card-stack";
         const anchor = document.createElement("a");
         anchor.href = "#";
         anchor.className = compactBookCard ? "rec-link rec-link-book" : "rec-link";
@@ -318,7 +341,21 @@ function renderSection(containerId, items) {
             window.location.href = "detail.html";
         });
 
-        container.appendChild(anchor);
+        const wlBtn = document.createElement("button");
+        wlBtn.type = "button";
+        wlBtn.className = "watchlist-btn";
+        wlBtn.textContent = "+ Watchlist";
+        wlBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            addItemToWatchlist(item);
+        });
+
+        card.appendChild(anchor);
+        if (!compactBookCard) {
+            card.appendChild(wlBtn);
+        }
+        container.appendChild(card);
     });
 }
 
@@ -340,8 +377,7 @@ function renderFanFavorites(items) {
             ? (imagePath.startsWith("http") ? imagePath : `${tmdbBaseUrl}${imagePath}`)
             : "assests/LuminaLogo.png";
 
-        const card = document.createElement("a");
-        card.href = "#";
+        const card = document.createElement("div");
         card.className = "fan-card";
         card.innerHTML = `
             <img src="${finalImageUrl}" alt="${item.title || "Fan favorite"}" loading="lazy">
@@ -351,11 +387,22 @@ function renderFanFavorites(items) {
             </div>
         `;
 
-        card.addEventListener("click", (e) => {
-            e.preventDefault();
+        card.addEventListener("click", () => {
             sessionStorage.setItem("selectedContent", JSON.stringify(normalizeItem(item)));
             window.location.href = "detail.html";
         });
+
+        const wlBtn = document.createElement("button");
+        wlBtn.type = "button";
+        wlBtn.className = "watchlist-btn fan-watchlist";
+        wlBtn.textContent = "+ Watchlist";
+        wlBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            addItemToWatchlist(item);
+        });
+
+        card.appendChild(wlBtn);
 
         container.appendChild(card);
     });
@@ -481,6 +528,8 @@ function renderGenreSections(data) {
         } else {
             const tmdbBaseUrl = "https://image.tmdb.org/t/p/w500";
             items.forEach((item) => {
+                const card = document.createElement("div");
+                card.className = "rec-card-stack";
                 const anchor = document.createElement("a");
                 anchor.href = "#";
                 anchor.className = "rec-link";
@@ -500,11 +549,47 @@ function renderGenreSections(data) {
                     window.location.href = "detail.html";
                 });
 
-                sectionBox.appendChild(anchor);
+                const wlBtn = document.createElement("button");
+                wlBtn.type = "button";
+                wlBtn.className = "watchlist-btn";
+                wlBtn.textContent = "+ Watchlist";
+                wlBtn.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    addItemToWatchlist(item);
+                });
+
+                card.appendChild(anchor);
+                card.appendChild(wlBtn);
+                sectionBox.appendChild(card);
             });
         }
 
         extraWrapper.appendChild(sectionHeader);
         extraWrapper.appendChild(sectionBox);
     });
+}
+
+function showToast(message) {
+    const old = document.getElementById("watchlistToast");
+    if (old) old.remove();
+    const toast = document.createElement("div");
+    toast.id = "watchlistToast";
+    toast.className = "watchlist-toast";
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 1800);
+}
+
+async function addItemToWatchlist(item) {
+    if (!window.addToWatchlist) {
+        showToast("Watchlist service unavailable");
+        return;
+    }
+    try {
+        await window.addToWatchlist(item);
+        showToast("Added to watchlist");
+    } catch (_err) {
+        showToast("Could not add to watchlist");
+    }
 }

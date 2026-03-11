@@ -1,11 +1,12 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, String, Text, TIMESTAMP
+from sqlalchemy.sql import text
 from app.core.database import Base
 
 
 class User(Base):
     __tablename__ = "users"
 
-    id = Column(Integer, primary_key=True, index=True)
-    email = Column(String, unique=True, index=True, nullable=False)
-    full_name = Column(String, nullable=True)
-    hashed_password = Column(String, nullable=False)
+    id = Column(Text, primary_key=True)
+    name = Column(Text, nullable=True)
+    email = Column(Text, unique=True, nullable=False)
+    created_at = Column(TIMESTAMP(timezone=True), server_default=text("NOW()"))

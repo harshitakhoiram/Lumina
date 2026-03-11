@@ -21,6 +21,7 @@ class ProfileRequest(BaseModel):
     email: Optional[EmailStr] = None
     interest: Optional[str] = None
     language: Optional[str] = None
+    languages: Optional[list[str]] = []
     genre: Optional[list[str]] = []
     selectedTitles: Optional[list] = []
     selectedActors: Optional[list] = []

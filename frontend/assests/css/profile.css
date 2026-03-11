@@ -212,6 +212,118 @@ body {
     display: none;
 }
 
+/* ── Language badge ── */
+.lang-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.lang-badge {
+    display: inline-block;
+    padding: 9px 20px;
+    border-radius: 999px;
+    background: rgba(255, 180, 0, 0.12);
+    border: 1px solid rgba(255, 180, 0, 0.28);
+    color: #ffd27a;
+    font-size: 0.95rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
+/* ── Genre chips ── */
+.chip--empty {
+    opacity: 0.45;
+}
+
+/* ── Poster grid ── */
+.poster-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 14px;
+}
+
+.poster-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 7px;
+}
+
+.poster-card img {
+    width: 100%;
+    aspect-ratio: 2 / 3;
+    object-fit: cover;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.poster-card img:hover {
+    transform: scale(1.04);
+    border-color: rgba(255, 180, 0, 0.35);
+}
+
+.poster-title {
+    font-size: 0.76rem;
+    text-align: center;
+    color: var(--muted);
+    margin: 0;
+    line-height: 1.3;
+    width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ── Actor grid ── */
+.actor-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+}
+
+.actor-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 7px;
+    width: 82px;
+}
+
+.actor-card img {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(255, 180, 0, 0.28);
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.actor-card img:hover {
+    transform: scale(1.06);
+    border-color: rgba(255, 180, 0, 0.6);
+}
+
+.actor-name {
+    font-size: 0.73rem;
+    text-align: center;
+    color: var(--muted);
+    margin: 0;
+    line-height: 1.3;
+    width: 82px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ── Loading / empty placeholders ── */
+.media-placeholder {
+    color: var(--muted);
+    font-size: 0.88rem;
+    font-style: italic;
+}
+
 @media (max-width: 768px) {
     .profile-card {
         padding: 24px;

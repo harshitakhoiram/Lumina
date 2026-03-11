@@ -147,6 +147,48 @@ def _keep_language(items: list[dict], lang: str):
     return [i for i in items if _item_language(i) == target]
 
 
+def _keep_any_language(items: list[dict], langs: list[str]):
+    """Keep items whose language matches any of the given language codes."""
+    targets = {str(l or "").strip().lower() for l in (langs or []) if l}
+    if not targets:
+        return items
+    return [i for i in items if _item_language(i) in targets]
+
+
+def _mix_by_languages(items: list[dict], langs: list[str], limit: int | None = None):
+    """Interleave items across selected languages to avoid single-language dominance."""
+    if not items:
+        return []
+
+    ordered_langs = [str(l or "").strip().lower() for l in (langs or []) if str(l or "").strip()]
+    if len(ordered_langs) <= 1:
+        return items[:limit] if limit else items
+
+    buckets: dict[str, list[dict]] = {l: [] for l in ordered_langs}
+    others: list[dict] = []
+    for item in items:
+        lang = _item_language(item)
+        if lang in buckets:
+            buckets[lang].append(item)
+        else:
+            others.append(item)
+
+    mixed: list[dict] = []
+    while True:
+        progressed = False
+        for l in ordered_langs:
+            if buckets[l]:
+                mixed.append(buckets[l].pop(0))
+                progressed = True
+                if limit and len(mixed) >= limit:
+                    return mixed
+        if not progressed:
+            break
+
+    mixed.extend(others)
+    return mixed[:limit] if limit else mixed
+
+
 def _cross_section_unique(*sections: list[dict]):
     """Preserves row order while ensuring no title/id appears in more than one row."""
     used_ids = set()
@@ -212,63 +254,66 @@ def _collect_used_titles(*sections):
 async def _tmdb_similarity_fallback(
     titles: list[str],
     lang: str = "en",
+    langs: list[str] | None = None,
     limit: int = 12,
     include_series: bool = True,
 ):
     """Builds a preference-aware fallback list from TMDB similar endpoints.
-    This keeps rows dynamic even when local embeddings/title matches are unavailable.
+    Accepts a list of language codes (`langs`) to produce a mixed result.
     """
     from app.services.movie_service import movie_service
 
+    effective_langs = langs if langs else [lang]
     collected = []
-    seen_ids = set()
+    seen_ids: set = set()
 
-    for title in titles[:3]:
-        query = str(title).strip()
-        if not query:
-            continue
+    for _lang in effective_langs:
+        for title in titles[:3]:
+            query = str(title).strip()
+            if not query:
+                continue
 
-        movie_hits = await movie_service.search_movies(query, original_language=lang)
-        if not movie_hits and lang.lower() != "en":
-            movie_hits = await movie_service.search_movies(query)
-        if movie_hits:
-            seed = movie_hits[0]
-            seed_id = seed.get("id")
-            if seed_id:
-                sims = await movie_service.get_similar_content(seed_id, original_language=lang)
-                if not sims and lang.lower() != "en":
-                    sims = await movie_service.get_similar_content(seed_id)
-                for item in sims:
-                    item_id = str(item.get("id") or "")
-                    if not item_id or item_id in seen_ids:
-                        continue
-                    seen_ids.add(item_id)
-                    collected.append(item)
-                    if len(collected) >= limit:
-                        return collected
+            movie_hits = await movie_service.search_movies(query, original_language=_lang)
+            if not movie_hits and _lang.lower() != "en":
+                movie_hits = await movie_service.search_movies(query)
+            if movie_hits:
+                seed = movie_hits[0]
+                seed_id = seed.get("id")
+                if seed_id:
+                    sims = await movie_service.get_similar_content(seed_id, original_language=_lang)
+                    if not sims and _lang.lower() != "en":
+                        sims = await movie_service.get_similar_content(seed_id)
+                    for item in sims:
+                        item_id = str(item.get("id") or "")
+                        if not item_id or item_id in seen_ids:
+                            continue
+                        seen_ids.add(item_id)
+                        collected.append(item)
+                        if len(collected) >= limit:
+                            return collected
 
-        if include_series:
-            series_hits = await movie_service.search_series(query, original_language=lang)
-            if not series_hits and lang.lower() != "en":
-                series_hits = await movie_service.search_series(query)
-        else:
-            series_hits = []
+            if include_series:
+                series_hits = await movie_service.search_series(query, original_language=_lang)
+                if not series_hits and _lang.lower() != "en":
+                    series_hits = await movie_service.search_series(query)
+            else:
+                series_hits = []
 
-        if series_hits:
-            seed = series_hits[0]
-            seed_id = seed.get("id")
-            if seed_id:
-                sims = await movie_service.get_similar_series(seed_id, original_language=lang)
-                if not sims and lang.lower() != "en":
-                    sims = await movie_service.get_similar_series(seed_id)
-                for item in sims:
-                    item_id = str(item.get("id") or "")
-                    if not item_id or item_id in seen_ids:
-                        continue
-                    seen_ids.add(item_id)
-                    collected.append(item)
-                    if len(collected) >= limit:
-                        return collected
+            if series_hits:
+                seed = series_hits[0]
+                seed_id = seed.get("id")
+                if seed_id:
+                    sims = await movie_service.get_similar_series(seed_id, original_language=_lang)
+                    if not sims and _lang.lower() != "en":
+                        sims = await movie_service.get_similar_series(seed_id)
+                    for item in sims:
+                        item_id = str(item.get("id") or "")
+                        if not item_id or item_id in seen_ids:
+                            continue
+                        seen_ids.add(item_id)
+                        collected.append(item)
+                        if len(collected) >= limit:
+                            return collected
 
     return collected
 
@@ -320,7 +365,7 @@ async def personalized_recommendations(
     user_id = payload.get("sub")
 
     prefs = db.execute(
-        text("SELECT interest, language, genre, selected_titles, favorite_content FROM user_preferences WHERE user_id = :user_id"),
+        text("SELECT interest, language, languages, genre, selected_titles, favorite_content FROM user_preferences WHERE user_id = :user_id"),
         {"user_id": user_id}
     ).fetchone()
 
@@ -343,6 +388,10 @@ async def personalized_recommendations(
 
     interest = prefs.interest
     language = prefs.language or "en"
+    # Use the full languages list; fall back to [language] for old rows
+    languages_list = _ensure_list(prefs.languages) if prefs.languages else [language]
+    if not languages_list:
+        languages_list = [language]
     genres = _ensure_list(prefs.genre)
     titles = _ensure_list(prefs.selected_titles)
     if not titles and prefs.favorite_content:
@@ -375,7 +424,7 @@ async def personalized_recommendations(
         WHERE user_avg.avg_embedding IS NOT NULL 
           AND title NOT ILIKE ALL(:title_patterns)
           AND UPPER(content_type) = ANY(:types)
-          AND language = :lang
+          AND language = ANY(:langs)
         ORDER BY embedding <=> user_avg.avg_embedding LIMIT :limit
     """)
     slider_rows = db.execute(
@@ -383,7 +432,7 @@ async def personalized_recommendations(
         {
             "title_patterns": title_patterns or ["%__no_title_match__%"],
             "types": target_types,
-            "lang": language,
+            "langs": languages_list,
             "limit": 20,
         },
     ).fetchall()
@@ -393,10 +442,10 @@ async def personalized_recommendations(
             SELECT content_id, external_id, title, poster_url, content_type, rating 
             FROM content 
             WHERE UPPER(content_type) = ANY(:types) 
-              AND (language = :lang OR language IS NULL OR language = 'en')
+              AND (language = ANY(:langs) OR language IS NULL OR language = 'en')
             ORDER BY popularity_score DESC LIMIT 20
         """)
-        relaxed_rows = db.execute(fallback_sql, {"types": target_types, "lang": language}).fetchall()
+        relaxed_rows = db.execute(fallback_sql, {"types": target_types, "langs": languages_list}).fetchall()
         existing = {str(r._mapping.get("content_id")) for r in slider_rows}
         slider_rows = list(slider_rows)
         for r in relaxed_rows:
@@ -408,31 +457,36 @@ async def personalized_recommendations(
             if len(slider_rows) >= 20:
                 break
 
-    if len(slider_rows) < 20 and language.lower() != "en":
+    if len(slider_rows) < 20 and languages_list != ["en"]:
         from app.services.movie_service import movie_service
-        tmdb_fill = await movie_service.search_by_genre_lang(
-            primary_genre,
-            language,
-            limit=24,
-            seed_key=f"{user_id}:slider:{primary_genre}:{language}",
-        )
-        existing_ids = {str((r._mapping.get("external_id") or "")) for r in slider_rows}
-        for item in tmdb_fill:
-            ext_id = str(item.get("id") or "")
-            if ext_id and ext_id in existing_ids:
+        for _lang in languages_list:
+            if _lang == "en":
                 continue
-            slider_rows.append(
-                {
-                    "content_id": f"tmdb-{ext_id}",
-                    "external_id": ext_id,
-                    "title": item.get("title"),
-                    "poster_url": item.get("image"),
-                    "content_type": "movie",
-                    "rating": item.get("rating"),
-                }
+            tmdb_fill = await movie_service.search_by_genre_lang(
+                primary_genre,
+                _lang,
+                limit=24,
+                seed_key=f"{user_id}:slider:{primary_genre}:{_lang}",
             )
-            if ext_id:
-                existing_ids.add(ext_id)
+            existing_ids = {str((r._mapping.get("external_id") or "") if hasattr(r, '_mapping') else (r.get("external_id") or "")) for r in slider_rows}
+            for item in tmdb_fill:
+                ext_id = str(item.get("id") or "")
+                if ext_id and ext_id in existing_ids:
+                    continue
+                slider_rows.append(
+                    {
+                        "content_id": f"tmdb-{ext_id}",
+                        "external_id": ext_id,
+                        "title": item.get("title"),
+                        "poster_url": item.get("image"),
+                        "content_type": "movie",
+                        "rating": item.get("rating"),
+                    }
+                )
+                if ext_id:
+                    existing_ids.add(ext_id)
+                if len(slider_rows) >= 20:
+                    break
             if len(slider_rows) >= 20:
                 break
 
@@ -448,7 +502,7 @@ async def personalized_recommendations(
 
     # --- 2. GENRE HIGHLIGHTS ---
     genre_sql_strict = text("""
-        SELECT content_id, external_id, title, poster_url, content_type, rating
+        SELECT content_id, external_id, title, poster_url, content_type, rating, language
         FROM content
         WHERE UPPER(content_type) = ANY(:types)
           AND (
@@ -456,7 +510,7 @@ async def personalized_recommendations(
                 OR EXISTS (SELECT 1 FROM unnest(genres) g WHERE LOWER(g) = LOWER(:genre_exact))
           )
           AND title NOT ILIKE ALL(:title_patterns)
-          AND language = :lang
+          AND language = ANY(:langs)
         ORDER BY popularity_score DESC LIMIT 6
     """)
     genre_types = target_types
@@ -471,13 +525,13 @@ async def personalized_recommendations(
             "genre_pattern": genre_pattern,
             "genre_exact": primary_genre_exact,
             "title_patterns": title_patterns or ["%__no_title_match__%"],
-            "lang": language,
+            "langs": languages_list,
         },
     ).fetchall()
 
     if interest == "video" and len(genre_rows) < 6:
         genre_sql_series_fill = text("""
-            SELECT content_id, external_id, title, poster_url, content_type, rating
+            SELECT content_id, external_id, title, poster_url, content_type, rating, language
             FROM content
             WHERE UPPER(content_type) = 'SERIES'
               AND (
@@ -485,7 +539,7 @@ async def personalized_recommendations(
                     OR EXISTS (SELECT 1 FROM unnest(genres) g WHERE LOWER(g) = LOWER(:genre_exact))
               )
               AND title NOT ILIKE ALL(:title_patterns)
-              AND language = :lang
+              AND language = ANY(:langs)
             ORDER BY popularity_score DESC LIMIT 12
         """)
         series_fill_rows = db.execute(
@@ -494,7 +548,7 @@ async def personalized_recommendations(
                 "genre_pattern": genre_pattern,
                 "genre_exact": primary_genre_exact,
                 "title_patterns": title_patterns or ["%__no_title_match__%"],
-                "lang": language,
+                "langs": languages_list,
             },
         ).fetchall()
         existing = {str(r._mapping.get("content_id") or "") for r in genre_rows}
@@ -517,17 +571,17 @@ async def personalized_recommendations(
             for i in slider_items
             if str(i.get("tmdb_id") or i.get("external_id") or i.get("id") or "").strip()
         }
-        tmdb_genre_fallback = await movie_service.search_by_genre_lang(
-            primary_genre,
-            language,
-            limit=12,
-            exclude_ids=slider_external_ids,
-            seed_key=f"{user_id}:genre:{primary_genre}:{language}",
-        )
-        for item in tmdb_genre_fallback:
-            item["content_type"] = "movie"
-            if "tmdb_id" not in item:
-                item["tmdb_id"] = item.get("id")
+        for _lang in languages_list:
+            _batch = await movie_service.search_by_genre_lang(
+                primary_genre, _lang, limit=12,
+                exclude_ids=slider_external_ids | {str(i.get("id") or i.get("tmdb_id") or "") for i in tmdb_genre_fallback},
+                seed_key=f"{user_id}:genre:{primary_genre}:{_lang}",
+            )
+            for item in _batch:
+                item["content_type"] = "movie"
+                if "tmdb_id" not in item:
+                    item["tmdb_id"] = item.get("id")
+            tmdb_genre_fallback.extend(_batch)
 
     # --- 3. INTEREST-BASED PICKS (explicitly tied to selected titles) ---
     interest_sql_strict = text("""
@@ -544,7 +598,7 @@ async def personalized_recommendations(
         WHERE c.embedding IS NOT NULL
           AND c.title NOT ILIKE ALL(:title_patterns)
           AND UPPER(c.content_type) = ANY(:types)
-          AND c.language = :lang
+          AND c.language = ANY(:langs)
         ORDER BY c.embedding <=> l.embedding, c.popularity_score DESC
         LIMIT 12
     """)
@@ -553,7 +607,7 @@ async def personalized_recommendations(
         {
             "title_patterns": title_patterns or ["%__no_title_match__%"],
             "types": target_types,
-            "lang": language,
+            "langs": languages_list,
         },
     ).fetchall()
 
@@ -572,7 +626,7 @@ async def personalized_recommendations(
             WHERE c.embedding IS NOT NULL
               AND c.title NOT ILIKE ALL(:title_patterns)
               AND UPPER(c.content_type) = ANY(:types)
-              AND (c.language = :lang OR c.language IS NULL OR c.language = 'en')
+              AND (c.language = ANY(:langs) OR c.language IS NULL OR c.language = 'en')
             ORDER BY c.embedding <=> l.embedding, c.popularity_score DESC
             LIMIT 24
         """)
@@ -581,7 +635,7 @@ async def personalized_recommendations(
             {
                 "title_patterns": title_patterns or ["%__no_title_match__%"],
                 "types": target_types,
-                "lang": language,
+                "langs": languages_list,
             },
         ).fetchall()
         seen_ids = {str(r._mapping.get("content_id") or "") for r in interest_rows}
@@ -604,30 +658,17 @@ async def personalized_recommendations(
     tmdb_interest_fallback = await _tmdb_similarity_fallback(
         titles,
         lang=language,
+        langs=languages_list,
         limit=12,
         include_series=False if interest == "video" else True,
     ) if titles else []
 
     # --- 4. DYNAMIC TRENDING (always real trending movies) ---
     from app.services.movie_service import movie_service
-    if language and language.lower() != "en":
-        base_trending = await movie_service.get_trending_movies_by_language(language, limit=12)
-        exclude_for_trending = {
-            str(i.get("id") or i.get("tmdb_id") or i.get("external_id") or "")
-            for i in base_trending
-            if str(i.get("id") or i.get("tmdb_id") or i.get("external_id") or "").strip()
-        }
-        genre_driven = await movie_service.search_by_genre_lang(
-            primary_genre,
-            language,
-            limit=12,
-            exclude_ids=exclude_for_trending,
-            seed_key=f"{user_id}:trending:{primary_genre}:{language}",
-        )
-
-        # Make Trending Now responsive to user genre by blending both lists.
+    non_en_langs = [l for l in languages_list if l.lower() != "en"]
+    if non_en_langs:
         trending_items = []
-        seen_ids = set()
+        seen_ids: set = set()
 
         def push_item(item):
             item_id = str(item.get("id") or "")
@@ -639,12 +680,21 @@ async def personalized_recommendations(
                 item["tmdb_id"] = item_id
             trending_items.append(item)
 
-        max_len = max(len(base_trending), len(genre_driven))
-        for idx in range(max_len):
-            if idx < len(genre_driven):
-                push_item(genre_driven[idx])
-            if idx < len(base_trending):
-                push_item(base_trending[idx])
+        for _lang in non_en_langs:
+            base_trending = await movie_service.get_trending_movies_by_language(_lang, limit=12)
+            genre_driven = await movie_service.search_by_genre_lang(
+                primary_genre, _lang, limit=12,
+                exclude_ids={str(i.get("id") or "") for i in base_trending if str(i.get("id") or "")},
+                seed_key=f"{user_id}:trending:{primary_genre}:{_lang}",
+            )
+            max_len = max(len(base_trending), len(genre_driven))
+            for idx in range(max_len):
+                if idx < len(genre_driven):
+                    push_item(genre_driven[idx])
+                if idx < len(base_trending):
+                    push_item(base_trending[idx])
+                if len(trending_items) >= 12:
+                    break
             if len(trending_items) >= 12:
                 break
 
@@ -681,10 +731,14 @@ async def personalized_recommendations(
     if book_row:
         book_rec = dict(book_row._mapping)
     else:
-        # Fetch from service if not in DB
+        # Fetch from service if not in DB, but never fail the full recommendations API.
         from app.services.book_service import book_service
-        book_res = await book_service.search_by_genre_lang(primary_genre, "en")
-        if book_res: book_rec = book_res[0]
+        try:
+            book_res = await book_service.search_by_genre_lang(primary_genre, "en")
+            if book_res:
+                book_rec = book_res[0]
+        except Exception:
+            book_rec = None
 
     # Pick one of the liked titles to show in "Since you like {title}"
     liked_title = titles[0] if titles else "your favorites"
@@ -716,13 +770,43 @@ async def personalized_recommendations(
     genre_payload = _dedupe_by_id(genre_payload)
     interest_payload = _exclude_existing(_dedupe_by_id(interest_payload), [genre_payload])
 
-    if language.lower() != "en":
-        genre_payload = _keep_language(genre_payload, language)
+    if language.lower() != "en" or len(languages_list) > 1:
+        genre_payload = _keep_any_language(genre_payload, languages_list)
+
+    # Ensure Explore has visible representation from each selected language when possible.
+    if len(languages_list) > 1:
+        from app.services.movie_service import movie_service
+        current_langs = {_item_language(i) for i in genre_payload if _item_language(i)}
+        used_ids_for_mix = _collect_used_ids(slider_items, genre_payload, interest_payload)
+        for _lang in languages_list:
+            code = str(_lang or "").strip().lower()
+            if not code or code in current_langs:
+                continue
+            lang_fill = await movie_service.search_by_genre_lang(
+                primary_genre,
+                code,
+                limit=8,
+                exclude_ids=used_ids_for_mix,
+                seed_key=f"{user_id}:genre-mix:{primary_genre}:{code}",
+            )
+            for item in lang_fill:
+                item["content_type"] = "movie"
+                if "tmdb_id" not in item:
+                    item["tmdb_id"] = item.get("id")
+                if "language" not in item:
+                    item["language"] = item.get("original_language") or code
+                genre_payload.append(item)
+                item_id = str(item.get("id") or item.get("tmdb_id") or "")
+                if item_id:
+                    used_ids_for_mix.add(item_id)
+            current_langs = {_item_language(i) for i in genre_payload if _item_language(i)}
+    genre_payload = _mix_by_languages(genre_payload, languages_list, limit=12)
 
     if len(interest_payload) < 8:
         refill_from_tmdb = await _tmdb_similarity_fallback(
             titles,
             lang=language,
+            langs=languages_list,
             limit=12,
             include_series=False if interest == "video" else True,
         ) if titles else []
@@ -739,7 +823,7 @@ async def personalized_recommendations(
 
     # Final hero composition: use preference-driven pools so it changes with user choices.
     # For non-English users, prioritize interest+genre first to avoid English-dominant hero output.
-    if language and language.lower() != "en":
+    if any(l.lower() != "en" for l in languages_list):
         hero_candidates = _dedupe_by_id(interest_payload + genre_payload + trending_items)
     else:
         hero_candidates = _dedupe_by_id(slider_items + interest_payload + genre_payload)
@@ -822,14 +906,14 @@ async def personalized_recommendations(
         used_titles = _collect_used_titles(slider_items, genre_payload, interest_payload, filtered_global_top)
         refill_rows = db.execute(
             text("""
-                SELECT content_id, external_id, title, poster_url, content_type, rating
+                SELECT content_id, external_id, title, poster_url, content_type, rating, language
                 FROM content
                 WHERE UPPER(content_type) = ANY(:types)
-                  AND (language = :lang OR language IS NULL OR language = 'en')
+                  AND (language = ANY(:langs) OR language IS NULL OR language = 'en')
                 ORDER BY popularity_score DESC
                 LIMIT 120
             """),
-            {"types": target_types, "lang": language},
+            {"types": target_types, "langs": languages_list},
         ).fetchall()
 
         refill_items = [_normalize_row(dict(r._mapping)) for r in refill_rows]
@@ -858,33 +942,34 @@ async def personalized_recommendations(
             if item_title:
                 used_titles.add(item_title)
 
-    if language.lower() != "en" and len(genre_payload) < 8:
+    if any(l.lower() != "en" for l in languages_list) and len(genre_payload) < 8:
         # Final language-locked refill for Explore when DB strict pool is thin.
         from app.services.movie_service import movie_service
-        extra_genre = await movie_service.search_by_genre_lang(
-            primary_genre,
-            language,
-            limit=12,
-            exclude_ids=_collect_used_ids(slider_items, genre_payload, interest_payload, filtered_global_top),
-            seed_key=f"{user_id}:genre-language-lock:{primary_genre}:{language}",
-        )
-        for item in extra_genre:
-            item["content_type"] = "movie"
-            if "tmdb_id" not in item:
-                item["tmdb_id"] = item.get("id")
-            if "language" not in item:
-                item["language"] = item.get("original_language") or language
-
-            item_id = str(item.get("id") or item.get("tmdb_id") or "")
-            item_title = _title_key(item)
-            if item_id and item_id in _collect_used_ids(slider_items, genre_payload, interest_payload, filtered_global_top):
-                continue
-            if item_title and item_title in _collect_used_titles(slider_items, genre_payload, interest_payload, filtered_global_top):
-                continue
-
-            genre_payload.append(item)
-            if len(genre_payload) >= 12:
+        used_set = _collect_used_ids(slider_items, genre_payload, interest_payload, filtered_global_top)
+        for _lang in languages_list:
+            if len(genre_payload) >= 8:
                 break
+            extra_genre = await movie_service.search_by_genre_lang(
+                primary_genre, _lang, limit=12,
+                exclude_ids=used_set,
+                seed_key=f"{user_id}:genre-language-lock:{primary_genre}:{_lang}",
+            )
+            for item in extra_genre:
+                item["content_type"] = "movie"
+                if "tmdb_id" not in item:
+                    item["tmdb_id"] = item.get("id")
+                if "language" not in item:
+                    item["language"] = item.get("original_language") or _lang
+                item_id = str(item.get("id") or item.get("tmdb_id") or "")
+                item_title = _title_key(item)
+                if item_id and item_id in _collect_used_ids(slider_items, genre_payload, interest_payload, filtered_global_top):
+                    continue
+                if item_title and item_title in _collect_used_titles(slider_items, genre_payload, interest_payload, filtered_global_top):
+                    continue
+                genre_payload.append(item)
+                used_set.add(item_id)
+                if len(genre_payload) >= 12:
+                    break
 
     # Build per-genre rows so dashboard can show recommendations for each chosen genre.
     genre_sections = [
@@ -908,7 +993,7 @@ async def personalized_recommendations(
                 "genre_pattern": extra_pattern,
                 "genre_exact": extra_exact,
                 "title_patterns": title_patterns or ["%__no_title_match__%"],
-                "lang": language,
+                "langs": languages_list,
             },
         ).fetchall()
 
@@ -923,14 +1008,14 @@ async def personalized_recommendations(
                             OR EXISTS (SELECT 1 FROM unnest(genres) g WHERE LOWER(g) = LOWER(:genre_exact))
                       )
                       AND title NOT ILIKE ALL(:title_patterns)
-                      AND language = :lang
+                      AND language = ANY(:langs)
                     ORDER BY popularity_score DESC LIMIT 12
                 """),
                 {
                     "genre_pattern": extra_pattern,
                     "genre_exact": extra_exact,
                     "title_patterns": title_patterns or ["%__no_title_match__%"],
-                    "lang": language,
+                    "langs": languages_list,
                 },
             ).fetchall()
             existing = {str(r._mapping.get("content_id") or "") for r in extra_rows}
@@ -950,27 +1035,54 @@ async def personalized_recommendations(
             extra_payload = _movie_first(extra_payload)
         extra_payload = _dedupe_by_id(extra_payload)
 
-        if language.lower() != "en":
-            extra_payload = _keep_language(extra_payload, language)
+        if language.lower() != "en" or len(languages_list) > 1:
+            extra_payload = _keep_any_language(extra_payload, languages_list)
+
+        if len(languages_list) > 1:
+            current_langs = {_item_language(i) for i in extra_payload if _item_language(i)}
+            used_extra_ids = _collect_used_ids(slider_items, genre_payload, interest_payload, filtered_global_top, extra_payload)
+            for _lang in languages_list:
+                code = str(_lang or "").strip().lower()
+                if not code or code in current_langs:
+                    continue
+                lang_fill = await movie_service.search_by_genre_lang(
+                    extra_exact,
+                    code,
+                    limit=8,
+                    exclude_ids=used_extra_ids,
+                    seed_key=f"{user_id}:genre-section-mix:{extra_exact}:{code}",
+                )
+                for item in lang_fill:
+                    item["content_type"] = "movie"
+                    if "tmdb_id" not in item:
+                        item["tmdb_id"] = item.get("id")
+                    if "language" not in item:
+                        item["language"] = item.get("original_language") or code
+                    extra_payload.append(item)
+                    item_id = str(item.get("id") or item.get("tmdb_id") or "")
+                    if item_id:
+                        used_extra_ids.add(item_id)
+                current_langs = {_item_language(i) for i in extra_payload if _item_language(i)}
+        extra_payload = _mix_by_languages(extra_payload, languages_list, limit=12)
 
         if len(extra_payload) < 8:
-            extra_tmdb_fill = await movie_service.search_by_genre_lang(
-                extra_exact,
-                language,
-                limit=12,
-                exclude_ids={
-                    str(i.get("id") or i.get("tmdb_id") or i.get("external_id") or "")
-                    for i in extra_payload
-                    if str(i.get("id") or i.get("tmdb_id") or i.get("external_id") or "").strip()
-                },
-                seed_key=f"{user_id}:genre-section:{extra_exact}:{language}",
-            )
+            extra_tmdb_all = []
+            for _lang in languages_list:
+                _fill = await movie_service.search_by_genre_lang(
+                    extra_exact, _lang, limit=12,
+                    exclude_ids={
+                        str(i.get("id") or i.get("tmdb_id") or i.get("external_id") or "")
+                        for i in extra_payload + extra_tmdb_all
+                        if str(i.get("id") or i.get("tmdb_id") or i.get("external_id") or "").strip()
+                    },
+                    seed_key=f"{user_id}:genre-section:{extra_exact}:{_lang}",
+                )
+                extra_tmdb_all.extend(_fill)
+            extra_tmdb_fill = extra_tmdb_all
             for item in extra_tmdb_fill:
                 item["content_type"] = "movie"
                 if "tmdb_id" not in item:
                     item["tmdb_id"] = item.get("id")
-                if language.lower() != "en" and _item_language(item) != language.lower():
-                    item["language"] = language
                 extra_payload.append(item)
                 if len(extra_payload) >= 12:
                     break
@@ -979,7 +1091,7 @@ async def personalized_recommendations(
             {
                 "genre": extra_exact,
                 "genre_name": _display_genre_name(extra_exact),
-                "items": _dedupe_by_id(extra_payload)[:12],
+                "items": _mix_by_languages(_dedupe_by_id(extra_payload), languages_list, limit=12),
             }
         )
 
@@ -992,5 +1104,6 @@ async def personalized_recommendations(
         "book_recommendation": book_rec,
         "genre_name": display_genre_name,
         "liked_title": liked_title,
-        "language": language
+        "language": language,
+        "languages": languages_list,
     }

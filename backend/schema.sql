@@ -61,6 +61,19 @@ CREATE TABLE IF NOT EXISTS daily_recommendations (
   PRIMARY KEY(user_id, rec_date)
 );
 
+-- USER WATCHLIST
+CREATE TABLE IF NOT EXISTS user_watchlist (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  external_id TEXT NOT NULL,
+  title TEXT NOT NULL,
+  poster_url TEXT,
+  content_type TEXT NOT NULL,
+  rating DOUBLE PRECISION,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id, external_id, content_type)
+);
+
 -- Vector index for fast similarity search
 CREATE INDEX IF NOT EXISTS idx_content_embedding_hnsw
   ON content USING hnsw (embedding vector_cosine_ops);

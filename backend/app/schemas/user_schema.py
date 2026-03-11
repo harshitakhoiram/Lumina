@@ -19,6 +19,7 @@ class ProfileResponse(BaseModel):
     name: str = ""
     email: EmailStr
     language: str | None = None
+    languages: list[str] = Field(default_factory=list)
     genres: list[str] = Field(default_factory=list)
     selected_titles: list[str] = Field(default_factory=list)
     selected_actors: list[str] = Field(default_factory=list)
@@ -26,6 +27,7 @@ class ProfileResponse(BaseModel):
 class ProfileUpdate(BaseModel):
     name: str
     language: str | None = None
+    languages: list[str] = Field(default_factory=list)
     genres: list[str] = Field(default_factory=list)
     selected_titles: list[str] = Field(default_factory=list)
     selected_actors: list[str] = Field(default_factory=list)

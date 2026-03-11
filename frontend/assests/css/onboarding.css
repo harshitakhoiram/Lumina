@@ -253,6 +253,7 @@ textarea:focus {
 .radio-option span {
     font-weight: 500;
     color: #234432;
+    white-space: nowrap;
 }
 
 /* hint / dynamic block */

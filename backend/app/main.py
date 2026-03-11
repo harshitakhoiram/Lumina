@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.routers import auth_router, recommendations, discovery, content_router
+from app.routers import auth_router, recommendations, discovery, content_router, watchlist
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from app.core.security import decode_token
 from dotenv import load_dotenv
@@ -24,6 +24,7 @@ app.include_router(auth_router.router)
 app.include_router(recommendations.router)
 app.include_router(discovery.router)
 app.include_router(content_router.router)
+app.include_router(watchlist.router)
 
 @app.get("/db-check")
 def db_check(db: Session = Depends(get_db)):

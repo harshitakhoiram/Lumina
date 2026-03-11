@@ -32,41 +32,39 @@
                 </div>
 
                 <form id="profileForm" class="profile-form">
+                    <!-- Name + Email -->
                     <div class="field-grid">
                         <div class="field-block">
                             <label for="profileName">User Name</label>
                             <input type="text" id="profileName" disabled>
                         </div>
-
                         <div class="field-block">
                             <label for="profileEmail">Email ID</label>
                             <input type="email" id="profileEmail" disabled>
                         </div>
                     </div>
 
-                    <div class="field-block">
-                        <label for="profileTitles">Movies / Series Selections</label>
-                        <textarea id="profileTitles" rows="3" disabled placeholder="Comma-separated titles"></textarea>
-                        <div class="chip-list" id="titlesPreview"></div>
-                    </div>
-
+                    <!-- Language + Genres -->
                     <div class="field-grid">
                         <div class="field-block">
-                            <label for="profileLanguage">Language</label>
-                            <input type="text" id="profileLanguage" disabled placeholder="Preferred language">
+                            <label>Language</label>
+                            <div class="lang-list view-only" id="languageDisplay"></div>
+                            <input type="text" id="profileLanguage" class="edit-only hidden" disabled placeholder="e.g. en, hi, fr">
                         </div>
-
                         <div class="field-block">
-                            <label for="profileGenres">Genres</label>
-                            <textarea id="profileGenres" rows="3" disabled placeholder="Comma-separated genres"></textarea>
-                            <div class="chip-list" id="genresPreview"></div>
+                            <label>Genres</label>
+                            <div class="lang-list view-only" id="genresDisplay"></div>
+                            <textarea id="profileGenres" rows="3" class="edit-only hidden" disabled placeholder="Comma-separated genres"></textarea>
                         </div>
                     </div>
 
+                    <!-- Movies / Series -->
                     <div class="field-block">
-                        <label for="profileActors">Actors</label>
-                        <textarea id="profileActors" rows="3" disabled placeholder="Comma-separated actors"></textarea>
-                        <div class="chip-list" id="actorsPreview"></div>
+                        <label>Movies / Series Selections</label>
+                        <div class="poster-grid view-only" id="titlesGrid">
+                            <span class="media-placeholder">Loading posters…</span>
+                        </div>
+                        <textarea id="profileTitles" rows="3" class="edit-only hidden" disabled placeholder="Comma-separated titles"></textarea>
                     </div>
 
                     <div class="profile-actions hidden" id="profileActions">

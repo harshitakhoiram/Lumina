@@ -171,6 +171,27 @@ document.addEventListener("DOMContentLoaded", async () => {
     const type = selected.content_type;
     const posterUrl = pickPosterUrl(selected);
 
+    const watchlistBtn = document.getElementById("addToWatchlistBtn");
+    if (watchlistBtn) {
+        watchlistBtn.addEventListener("click", async () => {
+            if (!window.addToWatchlist) return;
+            watchlistBtn.disabled = true;
+            const previous = watchlistBtn.innerText;
+            watchlistBtn.innerText = "Saving...";
+            try {
+                await window.addToWatchlist(normalizeItem(selected));
+                watchlistBtn.innerText = "Added";
+            } catch (_error) {
+                watchlistBtn.innerText = "Retry Add";
+            } finally {
+                window.setTimeout(() => {
+                    watchlistBtn.disabled = false;
+                    watchlistBtn.innerText = previous;
+                }, 1200);
+            }
+        });
+    }
+
     setText("dynTitle", selected.title || "Loading title...");
     setText("dynRating", selected.rating || selected.vote_average || "-");
     setText("dynOverview", selected.overview || selected.description || "Loading description...");

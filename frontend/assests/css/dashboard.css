@@ -333,13 +333,13 @@ h1 {
 .hero-carousel-wrapper {
   position: relative;
   width: 100%;
-  height: 450px;
-  /* Forces the rectangular breadth you want */
+  height: 460px;
   margin-top: 20px;
-  background: #111;
-  border-radius: 15px;
+  border-radius: 18px;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 24px 50px rgba(0, 0, 0, 0.45);
+  background: #111;
 }
 
 #hero-display {
@@ -351,27 +351,157 @@ h1 {
   width: 100%;
   height: 100%;
   background-size: cover;
-  /* Stretches the image to fill the rectangle */
-  background-position: center 20%;
+  background-position: center;
   background-repeat: no-repeat;
-  display: flex;
-  align-items: flex-end;
-  /* Removed absolute positioning and opacity to ensure it stays visible */
   position: relative;
 }
 
-.hero-info-box {
+.hero-overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 78% 24%, rgba(255, 180, 0, 0.24), transparent 45%),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.88) 25%, rgba(0, 0, 0, 0.72) 62%, rgba(0, 0, 0, 0.45) 100%);
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  height: 100%;
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  gap: 28px;
+  align-items: center;
+  padding: 28px 34px;
+}
+
+.hero-poster-wrap {
   width: 100%;
-  padding: 40px;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 30%, transparent);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  max-width: 240px;
+  aspect-ratio: 2 / 3;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: 0 16px 28px rgba(0, 0, 0, 0.5);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.hero-poster {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.hero-info-box {
+  max-width: 760px;
+}
+
+.hero-meta-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.hero-chip {
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 6px 10px;
+  border-radius: 999px;
+  color: #f5e1ac;
+  background: rgba(255, 180, 0, 0.14);
+  border: 1px solid rgba(255, 180, 0, 0.35);
 }
 
 .hero-info-box h2 {
-  font-size: 2.5rem;
-  margin: 0;
+  margin: 0 0 8px;
+  line-height: 1.08;
+  font-size: clamp(1.7rem, 4vw, 2.7rem);
   color: var(--accent);
+}
+
+.hero-info-box p {
+  margin: 0;
+  max-width: 68ch;
+  color: #ececec;
+  font-size: 1.02rem;
+  line-height: 1.55;
+}
+
+.hero-cta-btn {
+  margin-top: 18px;
+  border: none;
+  border-radius: 999px;
+  padding: 12px 24px;
+  background: linear-gradient(90deg, #ff9d1f, #ffbe5c);
+  color: #161616;
+  font-weight: 800;
+  font-family: var(--font-main);
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hero-cta-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 22px rgba(255, 170, 32, 0.35);
+}
+
+.hero-action-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.hero-ghost-btn {
+  margin-top: 18px;
+  border-radius: 999px;
+  padding: 11px 18px;
+  border: 1px solid rgba(255, 180, 0, 0.5);
+  background: rgba(255, 180, 0, 0.12);
+  color: #ffe2a5;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.rec-card-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.watchlist-btn {
+  border: 1px solid rgba(255, 180, 0, 0.4);
+  background: rgba(255, 180, 0, 0.12);
+  color: #ffd88b;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
+.watchlist-btn:hover,
+.hero-ghost-btn:hover {
+  background: rgba(255, 180, 0, 0.2);
+}
+
+.fan-watchlist {
+  margin-top: 8px;
+}
+
+.watchlist-toast {
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  z-index: 2000;
+  background: #1f1a10;
+  border: 1px solid rgba(255, 180, 0, 0.45);
+  color: #ffd88b;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-weight: 700;
 }
 
 .hero-nav {
@@ -543,6 +673,9 @@ h1 {
   border: 1px solid #262626;
   border-radius: 8px;
   overflow: hidden;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
 }
 
 .fan-card:hover {
@@ -673,7 +806,25 @@ footer {
   }
 
   .hero-carousel-wrapper {
-    height: 300px;
+    height: 390px;
+  }
+
+  .hero-content {
+    grid-template-columns: 130px minmax(0, 1fr);
+    gap: 16px;
+    padding: 18px;
+  }
+
+  .hero-info-box p {
+    font-size: 0.92rem;
+    line-height: 1.45;
+    max-height: 6.1em;
+    overflow: hidden;
+  }
+
+  .hero-cta-btn {
+    padding: 10px 18px;
+    margin-top: 14px;
   }
 
   .fan-nav {
@@ -688,6 +839,41 @@ footer {
 }
 
 @media(max-width: 480px) {
+  .hero-carousel-wrapper {
+    height: 330px;
+  }
+
+  .hero-content {
+    grid-template-columns: 94px minmax(0, 1fr);
+    gap: 12px;
+    padding: 14px;
+  }
+
+  .hero-chip {
+    font-size: 0.66rem;
+    padding: 4px 8px;
+  }
+
+  .hero-info-box h2 {
+    font-size: 1.25rem;
+  }
+
+  .hero-info-box p {
+    font-size: 0.83rem;
+    line-height: 1.35;
+    max-height: 4.1em;
+  }
+
+  .hero-cta-btn {
+    padding: 8px 14px;
+    font-size: 0.82rem;
+  }
+
+  .hero-nav {
+    padding: 14px 10px;
+    font-size: 1.4rem;
+  }
+
   .box {
     grid-template-columns: repeat(2, 1fr);
   }

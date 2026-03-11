@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Watchlist | Lumina</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assests/css/dashboard.css">
+  <link rel="stylesheet" href="assests/css/watchlist.css">
+  <script defer src="assests/js/watchlist-api.js"></script>
+  <script defer src="assests/js/watchlist.js"></script>
+</head>
+<body>
+  <main class="watchlist-page">
+    <div class="watchlist-shell">
+      <div class="watchlist-topbar">
+        <a href="dashboard.html" class="watchlist-back">Back to Dashboard</a>
+        <h1>My Watchlist</h1>
+      </div>
+      <p id="watchlistStatus" class="watchlist-status">Loading your saved titles...</p>
+      <div id="watchlistGrid" class="watchlist-grid"></div>
+    </div>
+  </main>
+</body>
+</html>
