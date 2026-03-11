@@ -1,0 +1,84 @@
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile | Lumina</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="assests/css/profile.css">
+    <script defer src="assests/js/profile.js"></script>
+</head>
+
+<body>
+    <main class="profile-page">
+        <section class="profile-shell">
+            <div class="profile-topbar">
+                <a href="dashboard.html" class="topbar-link">← Back to Dashboard</a>
+                <button type="button" class="topbar-btn" id="logoutBtn">Logout</button>
+            </div>
+
+            <div class="profile-card">
+                <div class="profile-header">
+                    <div>
+                        <p class="eyebrow">Lumina Profile</p>
+                        <h1>My Profile</h1>
+                        <p class="profile-subtext">View and update your onboarding preferences.</p>
+                    </div>
+                    <button type="button" class="edit-btn" id="editBtn">Edit Profile</button>
+                </div>
+
+                <form id="profileForm" class="profile-form">
+                    <div class="field-grid">
+                        <div class="field-block">
+                            <label for="profileName">User Name</label>
+                            <input type="text" id="profileName" disabled>
+                        </div>
+
+                        <div class="field-block">
+                            <label for="profileEmail">Email ID</label>
+                            <input type="email" id="profileEmail" disabled>
+                        </div>
+                    </div>
+
+                    <div class="field-block">
+                        <label for="profileTitles">Movies / Series Selections</label>
+                        <textarea id="profileTitles" rows="3" disabled placeholder="Comma-separated titles"></textarea>
+                        <div class="chip-list" id="titlesPreview"></div>
+                    </div>
+
+                    <div class="field-grid">
+                        <div class="field-block">
+                            <label for="profileLanguage">Language</label>
+                            <input type="text" id="profileLanguage" disabled placeholder="Preferred language">
+                        </div>
+
+                        <div class="field-block">
+                            <label for="profileGenres">Genres</label>
+                            <textarea id="profileGenres" rows="3" disabled placeholder="Comma-separated genres"></textarea>
+                            <div class="chip-list" id="genresPreview"></div>
+                        </div>
+                    </div>
+
+                    <div class="field-block">
+                        <label for="profileActors">Actors</label>
+                        <textarea id="profileActors" rows="3" disabled placeholder="Comma-separated actors"></textarea>
+                        <div class="chip-list" id="actorsPreview"></div>
+                    </div>
+
+                    <div class="profile-actions hidden" id="profileActions">
+                        <button type="button" class="secondary-btn" id="cancelBtn">Cancel</button>
+                        <button type="submit" class="primary-btn">Save Changes</button>
+                    </div>
+
+                    <p class="status-message" id="profileStatus"></p>
+                </form>
+            </div>
+        </section>
+    </main>
+</body>
+
+</html>

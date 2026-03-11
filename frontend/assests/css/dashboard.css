@@ -72,31 +72,144 @@ h1 {
   flex-grow: 1;
   display: flex;
   justify-content: center;
-  padding: 0 40px;
+  align-items: center;
+  flex: 1;
+  max-width: 640px;
 }
 
-.search-btn-circle {
-  background: rgba(255, 255, 255, 0.08);
-  /* Match existing glass feel */
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: white;
-  min-width: 88px;
-  height: 45px;
-  border-radius: 24px;
+.search-wrapper {
+  width: 100%;
   display: flex;
   align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: 0.86rem;
-  padding: 0 14px;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
 }
 
-.search-btn-circle:hover {
-  background: var(--accent);
-  color: black;
-  transform: scale(1.1);
-  box-shadow: 0 0 15px rgba(255, 180, 0, 0.4);
+.search-icon {
+  color: #bdbdbd;
+  font-size: 0.92rem;
+  white-space: nowrap;
+}
+
+.search-wrapper input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #ffffff;
+  font-size: 1rem;
+  font-family: "Inter", sans-serif;
+}
+
+.search-wrapper input::placeholder {
+  color: #9a9a9a;
+}
+
+.search-submit-btn {
+  border: none;
+  border-radius: 999px;
+  padding: 10px 18px;
+  background: linear-gradient(90deg, #ff8c1a, #ffb347);
+  color: #111;
+  font-weight: 700;
+  font-family: "Inter", sans-serif;
+  cursor: pointer;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.search-submit-btn:hover {
+  transform: translateY(-1px);
+  opacity: 0.96;
+}
+
+.search-form-shell {
+    position: relative;
+}
+
+.search-submit-btn {
+    border: none;
+    border-radius: 999px;
+    padding: 10px 16px;
+    background: linear-gradient(90deg, #ff8c1a, #ffb347);
+    color: #111;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.search-suggestions {
+    position: absolute;
+    top: calc(100% + 10px);
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    padding: 8px;
+    border-radius: 18px;
+    background: rgba(16, 16, 16, 0.98);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 18px 36px rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(12px);
+}
+
+.search-suggestion-item {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 48px minmax(0, 1fr);
+    gap: 12px;
+    align-items: center;
+    padding: 10px;
+    border: none;
+    border-radius: 14px;
+    background: transparent;
+    color: #fff;
+    text-align: left;
+    cursor: pointer;
+}
+
+.search-suggestion-item:hover,
+.search-suggestion-item.active {
+    background: rgba(255, 176, 76, 0.12);
+}
+
+.search-suggestion-poster {
+    width: 48px;
+    height: 64px;
+    object-fit: cover;
+    border-radius: 10px;
+    background: #1a1a1a;
+}
+
+.search-suggestion-copy {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.search-suggestion-title {
+    font-weight: 600;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.search-suggestion-meta {
+    font-size: 0.86rem;
+    color: #b7b7b7;
+}
+
+@media (max-width: 900px) {
+  .search-section {
+    max-width: 100%;
+  }
+
+  .search-submit-btn {
+    padding: 9px 14px;
+  }
 }
 
 /* USER SECTION (RESTORED) */
@@ -150,6 +263,68 @@ h1 {
 
 .user-section:hover .profile-circle {
   border-color: var(--accent);
+}
+
+.user-section {
+    position: relative;
+}
+
+.account-menu {
+    position: relative;
+}
+
+.account-trigger {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: #fff;
+    padding: 0;
+}
+
+.account-dropdown {
+    position: absolute;
+    top: calc(100% + 12px);
+    right: 0;
+    min-width: 240px;
+    padding: 10px;
+    border-radius: 18px;
+    background: rgba(16, 16, 16, 0.98);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 18px 36px rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(12px);
+    z-index: 1000;
+}
+
+.account-dropdown.hidden {
+    display: none;
+}
+
+.account-dropdown-item {
+    width: 100%;
+    display: block;
+    padding: 12px 14px;
+    border: none;
+    border-radius: 12px;
+    background: transparent;
+    color: #ffffff;
+    text-decoration: none;
+    text-align: left;
+    font-family: "Inter", sans-serif;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.account-dropdown-item:hover {
+    background: rgba(255, 176, 76, 0.12);
+    color: #ffb347;
+}
+
+.logout-item {
+    color: #ffb347;
 }
 
 /* --- CONSOLIDATED HERO SECTION (FIXED FOR BREADTH) --- */
@@ -421,25 +596,34 @@ h1 {
   border-radius: 6px 0 0 6px;
 }
 
-/* FOOTER & LINKS (RESTORED) */
+/* FOOTER */
+footer {
+  width: 100%;
+}
+
 .sub-links {
-  margin-top: 80px;
+  max-width: 1280px;
+  margin: 80px auto 0;
+  padding: 40px 32px 24px;
+  box-sizing: border-box;
   border-top: 1px solid rgba(255, 255, 255, 0.05);
-  padding-top: 40px;
 }
 
 .sub-links ul {
   list-style: none;
   padding: 0;
+  margin: 0;
   display: grid;
-  grid-gap: 15px;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 15px 32px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 220px));
+  justify-content: center;
 }
 
 .sub-links a {
   color: var(--dark);
   text-decoration: none;
-  font-size: 0.85rem;
+  font-size: 0.95rem;
+  font-family: var(--font-main);
   transition: color 0.2s ease;
 }
 
@@ -448,11 +632,26 @@ h1 {
   text-decoration: underline;
 }
 
-footer {
-  padding: 40px 0;
+.sub-links-credit {
+  margin: 40px auto 0;
   text-align: center;
-  color: var(--dark);
-  font-size: 0.85rem;
+  width: 100%;
+  color: var(--light);
+  font-family: var(--font-main);
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+@media (max-width: 768px) {
+  .sub-links {
+    padding: 32px 20px 24px;
+  }
+
+  .sub-links ul {
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    justify-content: stretch;
+  }
 }
 
 /* RESPONSIVE (RESTORED) */

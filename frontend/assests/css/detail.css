@@ -161,3 +161,7 @@ body {
     color: #b7b7b7;
     font-size: 0.78rem;
 }
+
+body.redesign footer {
+    margin-top: 40px;
+}

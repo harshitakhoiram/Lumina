@@ -1,103 +1,109 @@
-<!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Search - Lumina</title>
-    <script src="https://kit.fontawesome.com/e2bce648c2.js" crossorigin="hurphygames"></script>
-    <link rel="stylesheet" href="assests/css/search.css" />
+    <title>Search | Lumina</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Outfit:wght@300;400;600;700&display=swap"
+        rel="stylesheet">
+
+    <link rel="stylesheet" href="assests/css/dashboard.css">
+    <link rel="stylesheet" href="assests/css/search.css">
+
+    <script defer src="assests/js/search-autocomplete.js"></script>
+    <script defer src="assests/js/search.js"></script>
 </head>
 
 <body>
-    <nav class="navbar">
-        <div class="navbar-container">
-            <a class="logo" href="dashboard.html"><img src="assests/LuminaLogo.png" alt="Lumina"></a>
-            <div class="nav-buttons">
-                <button id="homeBtn" class="nav-btn">Home</button>
-                <button id="dashboardBtn" class="nav-btn">Dashboard</button>
-                <button id="profileBtn" class="nav-btn">Profile</button>
-                <button id="logoutBtn" class="nav-btn">Logout</button>
+    <div class="wrapper search-page">
+        <header class="main-header">
+            <div class="logo-box">
+                <a href="dashboard.html">
+                    <img src="assests/LuminaLogo.png" alt="Lumina Logo" class="lumina-logo">
+                </a>
             </div>
-        </div>
-    </nav>
 
-    <div class="search-container">
-        <h2>Discover Movies, Series & Books</h2>
-
-        <!-- Search Bar -->
-        <div class="search-box">
-            <input type="text" id="searchInput" placeholder="Search movies, TV series, or books..."
-                autocomplete="off" />
-            <div class="filter-buttons">
-                <button class="filter-btn active" data-type="all">All</button>
-                <button class="filter-btn" data-type="movie">Movies</button>
-                <button class="filter-btn" data-type="series">Series</button>
-                <button class="filter-btn" data-type="book">Books</button>
+            <div class="search-section">
+                <form id="searchPageSearchForm" class="search-wrapper search-form-shell">
+                    <span class="search-icon" aria-hidden="true">Search</span>
+                    <input
+                        type="text"
+                        id="searchQueryInput"
+                        placeholder="Search within Lumina..."
+                        autocomplete="off"
+                    >
+                    <button type="submit" class="search-submit-btn">Search</button>
+                    <div id="searchPageSuggestions" class="search-suggestions" hidden></div>
+                </form>
             </div>
-        </div>
 
-        <!-- Results Section -->
-        <div id="searchResults" class="results-section hidden">
-            <h3>Search Results</h3>
-            <div id="resultsGrid" class="content-grid"></div>
-        </div>
+            <div class="user-section">
+                <a href="dashboard.html" class="nav-link home-btn">Home</a>
+                <div class="profile-circle"><span aria-hidden="true">U</span></div>
+            </div>
+        </header>
 
-        <!-- Recommendations Section -->
-        <div id="recommendationsSection" class="recommendations-section hidden">
-            <h3 id="recommendationsTitle">You Might Like</h3>
-            <div id="recommendationsGrid" class="content-grid"></div>
-        </div>
+        <nav class="sub-links-bar" aria-label="Secondary navigation">
+            <div class="sub-links-inner">
+                <a href="dashboard.html" class="sub-link-item active">Home</a>
+                <a href="search.html" class="sub-link-item">Search</a>
+                <a href="detail.html" class="sub-link-item">Details</a>
+                <a href="#" class="sub-link-item">Movies</a>
+                <a href="#" class="sub-link-item">Series</a>
+                <a href="#" class="sub-link-item">Books</a>
+            </div>
+        </nav>
 
-        <!-- No Results Message -->
-        <div id="noResults" class="message hidden">
-            <p>No results found. Try searching for something else!</p>
-        </div>
+        <section class="main-container search-main-container">
+            <div class="location" id="searchPageRoot">
 
-        <!-- Loading Spinner -->
-        <div id="loadingSpinner" class="spinner hidden"></div>
-    </div>
-
-    <!-- Modal for Content Details -->
-    <div id="detailModal" class="modal hidden">
-        <div class="modal-content">
-            <span class="close-modal">&times;</span>
-            <div class="modal-body">
-                <img id="modalPoster" class="modal-poster" src="" alt="" />
-                <div class="modal-info">
-                    <h2 id="modalTitle"></h2>
-                    <p id="modalType" class="modal-type"></p>
-                    <p id="modalRating" class="modal-rating"></p>
-                    <p id="modalDescription" class="modal-description"></p>
-                    <p id="modalReleaseDate" class="modal-release"></p>
-                    <div class="modal-actions">
-                        <button id="likeBtn" class="action-btn like-btn">❤️ Like</button>
-                        <button id="bookmarkBtn" class="action-btn bookmark-btn">🔖 Bookmark</button>
-                        <button id="rateBtn" class="action-btn rate-btn">⭐ Rate</button>
+                <section class="search-hero-block">
+                    <div class="section-header-row">
+                        <h2 class="section-title">Search Result</h2>
                     </div>
-                </div>
+
+                    <div id="searchedMovieSpotlight" class="searched-movie-spotlight">
+                        <div class="search-loading-card">Searching...</div>
+                    </div>
+                </section>
+
+                <section class="search-results-block">
+                    <div class="section-header-row">
+                        <h2 id="similarSectionTitle" class="section-title">Movies similar to your search</h2>
+                    </div>
+
+                    <div id="similarMoviesGrid" class="search-grid">
+                        <div class="search-loading-card">Loading similar titles...</div>
+                    </div>
+                </section>
+
             </div>
-        </div>
+        </section>
     </div>
 
-    <!-- Rating Modal -->
-    <div id="ratingModal" class="modal hidden">
-        <div class="modal-content">
-            <span class="close-rating">&times;</span>
-            <h3>Rate this item</h3>
-            <div class="rating-stars">
-                <span class="star" data-value="1">⭐</span>
-                <span class="star" data-value="2">⭐</span>
-                <span class="star" data-value="3">⭐</span>
-                <span class="star" data-value="4">⭐</span>
-                <span class="star" data-value="5">⭐</span>
-            </div>
-            <button id="submitRating" class="submit-btn">Submit</button>
-        </div>
-    </div>
+    <footer>
+        <div class="sub-links">
+            <ul>
+                <li><a href="#">Audio and Subtitles</a></li>
+                <li><a href="#">Audio Description</a></li>
+                <li><a href="#">Help Center</a></li>
+                <li><a href="#">Gift Cards</a></li>
+                <li><a href="#">Media Center</a></li>
+                <li><a href="#">Investor Relations</a></li>
+                <li><a href="#">Jobs</a></li>
+                <li><a href="#">Terms of Use</a></li>
+                <li><a href="#">Privacy</a></li>
+                <li><a href="#">Legal Notices</a></li>
+                <li><a href="#">Corporate Information</a></li>
+                <li><a href="#">Contact Us</a></li>
+            </ul>
 
-    <script src="assests/js/api.js"></script>
-    <script src="assests/js/search.js"></script>
+            <div class="sub-links-credit">Harshita & Athira © 2026</div>
+        </div>
+    </footer>
 </body>
 
 </html>

@@ -1,41 +1,32 @@
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from jose import jwt, JWTError
 from passlib.context import CryptContext
 from dotenv import load_dotenv
 
 load_dotenv()
 
-# 1. Setup Password Hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-# 2. JWT Configuration (Stored in your .env file)
-SECRET_KEY = os.getenv("SECRET_KEY", "your-super-secret-key-change-this")
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # Token lasts for 24 hours
+# Use the SAME env names as app.core.security
+SECRET_KEY = os.getenv("JWT_SECRET") or os.getenv("SECRET_KEY", "change-this-secret-key-to-at-least-32-chars")
+ALGORITHM = os.getenv("JWT_ALG", "HS256")
+ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24
 
-# --- PASSWORD LOGIC ---
 def get_password_hash(password: str) -> str:
-    """Turns plain text into a secure hash for the DB."""
     return pwd_context.hash(password)
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Compares login password with the DB hash."""
     return pwd_context.verify(plain_password, hashed_password)
 
-# --- TOKEN LOGIC (The "Digital Ticket") ---
 def create_access_token(data: dict):
-    """Generates a JWT token for the frontend to store."""
     to_encode = data.copy()
-    expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 def decode_access_token(token: str):
-    """Checks if the token is valid and returns user data."""
     try:
-        decoded_token = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        return decoded_token if decoded_token["exp"] >= datetime.utcnow().timestamp() else None
+        return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
     except JWTError:
         return None

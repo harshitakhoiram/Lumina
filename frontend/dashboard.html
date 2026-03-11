@@ -12,6 +12,7 @@
     rel="stylesheet">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
+  <script defer src="assests/js/search-autocomplete.js"></script>
   <script defer src="assests/js/dashboard.js"></script>
 </head>
 
@@ -27,15 +28,34 @@
       </div>
 
       <div class="search-section">
-        <button class="search-btn-circle" id="searchPageBtn" title="Search Lumina">
-          <span aria-hidden="true">Search</span>
-        </button>
+        <form id="dashboardSearchForm" class="search-wrapper search-form-shell" action="search.html" method="get">
+          <span class="search-icon" aria-hidden="true">Search</span>
+          <input
+            type="text"
+            id="navbar-query"
+            name="q"
+            placeholder="Search within Lumina..."
+            autocomplete="off"
+          >
+          <button type="submit" class="search-submit-btn">Search</button>
+          <div id="dashboardSearchSuggestions" class="search-suggestions" hidden></div>
+        </form>
       </div>
 
       <div class="user-section">
-        <span class="account-text">My Account</span>
-        <div class="profile-circle" id="profileBtn">
-          <span aria-hidden="true">U</span>
+        <div class="account-menu" id="accountMenu">
+          <button type="button" class="account-trigger" id="accountTrigger" aria-expanded="false" aria-haspopup="true">
+            <span class="account-text">My Account</span>
+            <div class="profile-circle" id="profileBtn">
+              <span aria-hidden="true">U</span>
+            </div>
+          </button>
+
+          <div class="account-dropdown hidden" id="accountDropdown">
+            <a href="profile.html" class="account-dropdown-item">My Account / My Profile</a>
+            <a href="watchlist.html" class="account-dropdown-item">Watchlist</a>
+            <button type="button" class="account-dropdown-item logout-item" id="logoutBtn">Logout</button>
+          </div>
         </div>
       </div>
     </header>
@@ -85,9 +105,12 @@
           <button class="fan-nav fan-next" id="fanNext" aria-label="Next">&#10095;</button>
         </div>
       </section>
+    </section>
+    <!-- END OF LINKS -->
 
+    <!-- FOOTER -->
+    <footer>
       <div class="sub-links">
-        <br>
         <ul>
           <li><a href="#">Audio and Subtitles</a></li>
           <li><a href="#">Audio Description</a></li>
@@ -102,14 +125,9 @@
           <li><a href="#">Corporate Information</a></li>
           <li><a href="#">Contact Us</a></li>
         </ul>
-      </div>
-    </section>
-    <!-- END OF LINKS -->
 
-    <!-- FOOTER -->
-    <footer>
-      <p></p>
-      <p>Harshita & Athira &copy 2026</p>
+        <div class="sub-links-credit">Harshita & Athira © 2026</div>
+      </div>
     </footer>
   </div>
 </body>

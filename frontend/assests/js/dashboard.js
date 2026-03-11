@@ -29,20 +29,95 @@ function normalizeItem(item) {
 
 // 2. NAVIGATION & SEARCH
 const setupNavigation = () => {
-    const searchBtn = document.getElementById("searchPageBtn");
-    if (searchBtn) {
-        searchBtn.addEventListener("click", () => {
-            window.location.href = "search.html";
+    const accountMenu = document.getElementById("accountMenu");
+    const accountTrigger = document.getElementById("accountTrigger");
+    const accountDropdown = document.getElementById("accountDropdown");
+    const logoutBtn = document.getElementById("logoutBtn");
+
+    if (accountTrigger && accountDropdown) {
+        accountTrigger.addEventListener("click", (event) => {
+            event.stopPropagation();
+            const isHidden = accountDropdown.classList.contains("hidden");
+            accountDropdown.classList.toggle("hidden", !isHidden);
+            accountTrigger.setAttribute("aria-expanded", String(isHidden));
+        });
+
+        document.addEventListener("click", (event) => {
+            if (!accountMenu || accountMenu.contains(event.target)) return;
+            accountDropdown.classList.add("hidden");
+            accountTrigger.setAttribute("aria-expanded", "false");
+        });
+
+        document.addEventListener("keydown", (event) => {
+            if (event.key !== "Escape") return;
+            accountDropdown.classList.add("hidden");
+            accountTrigger.setAttribute("aria-expanded", "false");
         });
     }
 
-    const profileBtn = document.getElementById("profileBtn");
-    if (profileBtn) {
-        profileBtn.addEventListener("click", () => {
-            window.location.href = "profile.html";
+    if (logoutBtn) {
+        logoutBtn.addEventListener("click", () => {
+            localStorage.removeItem("access_token");
+            localStorage.removeItem("user_id");
+            localStorage.removeItem("refresh_token");
+            sessionStorage.clear();
+            window.location.href = "index.html";
         });
     }
 };
+
+function buildSearchSelection(item) {
+    const mediaType = String(item?.media_type || item?.content_type || "").toLowerCase() === "tv" ||
+        String(item?.content_type || "").toLowerCase() === "series"
+        ? "tv"
+        : "movie";
+
+    return {
+        ...item,
+        id: item?.tmdb_id || item?.id || null,
+        tmdb_id: item?.tmdb_id || item?.id || null,
+        title: item?.title || item?.name || "Untitled",
+        poster_url: item?.poster_url || item?.image || item?.poster_path || "",
+        media_type: mediaType,
+        content_type: mediaType === "tv" ? "series" : "movie",
+        release_date: item?.release_date || item?.first_air_date || ""
+    };
+}
+
+function bindDashboardSearch() {
+    const form = document.getElementById("dashboardSearchForm");
+    const input = document.getElementById("navbar-query");
+
+    if (!form || !input) return;
+
+    form.addEventListener("submit", (event) => {
+        event.preventDefault();
+
+        const query = input.value.trim();
+        if (!query) {
+            input.focus();
+            return;
+        }
+
+        sessionStorage.removeItem("selectedSearchContent");
+        sessionStorage.setItem("lastSearchQuery", query);
+        window.location.href = `search.html?q=${encodeURIComponent(query)}`;
+    });
+
+    if (typeof window.initSearchAutocomplete === "function") {
+        window.initSearchAutocomplete({
+            inputId: "navbar-query",
+            formId: "dashboardSearchForm",
+            dropdownId: "dashboardSearchSuggestions",
+            onSelect: (item) => {
+                const selected = buildSearchSelection(item);
+                sessionStorage.setItem("selectedSearchContent", JSON.stringify(selected));
+                sessionStorage.setItem("lastSearchQuery", selected.title);
+                window.location.href = `search.html?q=${encodeURIComponent(selected.title)}`;
+            }
+        });
+    }
+}
 
 // 3. HERO CAROUSEL LOGIC
 function initHeroNav() {
@@ -340,6 +415,7 @@ function initFanCarouselNav() {
 // 5. INITIALIZATION
 document.addEventListener("DOMContentLoaded", () => {
     setupNavigation();
+    bindDashboardSearch();
     initFanCarouselNav();
     loadDailyRecommendations();
 });
