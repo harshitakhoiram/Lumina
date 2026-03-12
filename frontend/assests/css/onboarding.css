@@ -237,11 +237,17 @@ textarea:focus {
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
 }
 
-.radio-option input[type="radio"] {
+.radio-option input[type="radio"],
+.radio-option input[type="checkbox"] {
     width: auto;
     margin: 0;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    box-shadow: none;
     accent-color: #4e6b55;
     transform: scale(1.1);
+    flex: 0 0 auto;
 }
 
 .radio-option:has(input:checked) {
