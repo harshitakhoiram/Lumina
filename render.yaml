@@ -2,9 +2,10 @@ services:
   - type: web
     name: lumina-api
     runtime: python
-    buildCommand: pip install -r backend/requirements.txt
-    startCommand: uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT
-    rootDir: .
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: bash -c "python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+    healthCheckPath: /health
     envVars:
       - key: DATABASE_URL
         fromDatabase:
@@ -12,6 +13,18 @@ services:
           property: connectionString
       - key: PYTHON_VERSION
         value: 3.11.0
+      - key: JWT_SECRET
+        sync: false
+      - key: GOOGLE_BOOKS_API_KEY
+        sync: false
+      - key: TMDB_BEARER_TOKEN
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+      - key: ENVIRONMENT
+        value: production
+      - key: DEBUG
+        value: "false"
 
 databases:
   - name: lumina-postgres
