@@ -1,4 +1,4 @@
-const API_BASE_URL = "http://localhost:8000";
+const API_BASE_URL = window.API_BASE_URL || "http://localhost:8000";
 const PROFILE_ENDPOINT = `${API_BASE_URL}/auth/me/profile`;
 const MEDIA_ENDPOINT = `${API_BASE_URL}/auth/me/profile/media`;
 const accessToken = localStorage.getItem("access_token");

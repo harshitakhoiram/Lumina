@@ -1,4 +1,4 @@
-const WATCHLIST_API_BASE = "http://localhost:8000";
+const WATCHLIST_API_BASE = window.API_BASE_URL || "http://localhost:8000";
 
 function watchlistToken() {
   return localStorage.getItem("access_token");

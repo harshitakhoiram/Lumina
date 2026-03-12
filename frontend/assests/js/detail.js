@@ -1,4 +1,4 @@
-const API_BASE = "http://localhost:8000";
+const API_BASE = window.API_BASE_URL || "http://localhost:8000";
 const IMG_BASE = "https://image.tmdb.org/t/p/original";
 const FALLBACK_IMG = "assests/LuminaLogo.png";
 

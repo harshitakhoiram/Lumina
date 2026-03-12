@@ -1,5 +1,5 @@
 // Dashboard Script
-const API_BASE_URL = "http://localhost:8000";
+const API_BASE_URL = window.API_BASE_URL || "http://localhost:8000";
 const currentToken = localStorage.getItem("access_token");
 const userId = localStorage.getItem("user_id");
 

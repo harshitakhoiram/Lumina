@@ -34,7 +34,10 @@
   const genreContainer = document.getElementById("genreOptions");
   const genreLabel = document.getElementById("genreLabel");
   const genreHint = document.getElementById("genreHint");
-  const API_BASE = (window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost") ? "http://127.0.0.1:8000" : "https://your-backend.onrender.com";
+  const API_BASE = window.API_BASE_URL ||
+    ((window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost")
+      ? "http://127.0.0.1:8000"
+      : "https://lumina-spzz.onrender.com");
 
   function buildApiUrl(path, params = {}) {
     const query = new URLSearchParams();
