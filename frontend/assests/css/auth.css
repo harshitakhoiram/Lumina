@@ -59,7 +59,7 @@ body {
     align-items: flex-start;
     justify-content: center;
     height: 800px;
-    background: url("/frontend/assests/bg.png") no-repeat;
+    background: url("../bg.png") no-repeat;
     background-size: cover;
     background-position: center;
     z-index: 1; 
