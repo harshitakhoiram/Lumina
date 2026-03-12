@@ -1,6 +1,6 @@
 import os
 import time
-import jwt
+from jose import jwt
 
 
 JWT_SECRET = os.getenv("JWT_SECRET", "dev-secret-key-32-bytes-long-min")
