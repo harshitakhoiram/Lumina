@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException, Query, Depends
+from fastapi.responses import Response
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from app.services.movie_service import movie_service
@@ -7,11 +8,20 @@ from app.schemas.content_schema import InteractionRequest
 from app.core.database import get_db
 from app.core.security import decode_token
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from urllib.parse import urlparse
+import httpx
 import uuid
 import random
 
 security = HTTPBearer()
 router = APIRouter(prefix="/discovery", tags=["Discovery"])
+
+_ALLOWED_IMAGE_HOSTS = {
+    "image.tmdb.org",
+    "books.google.com",
+    "books.googleusercontent.com",
+    "covers.openlibrary.org",
+}
 
 # Curated clean genre lists per content type
 _VIDEO_GENRES = [
@@ -79,6 +89,28 @@ async def get_onboarding_options(
 
     genres = _VIDEO_GENRES if type == "video" else _BOOK_GENRES
     return {"languages": languages, "genres": genres}
+
+
+@router.get("/image-proxy")
+async def image_proxy(url: str = Query(..., description="Remote image URL")):
+    """Proxy remote images through backend to bypass client TLS trust issues.
+
+    Only allows known poster hosts.
+    """
+    parsed = urlparse(url)
+    host = (parsed.hostname or "").lower()
+    if parsed.scheme not in {"http", "https"} or host not in _ALLOWED_IMAGE_HOSTS:
+        raise HTTPException(status_code=400, detail="Unsupported image URL")
+
+    async with httpx.AsyncClient(timeout=15.0, verify=False) as client:
+        try:
+            resp = await client.get(url)
+            resp.raise_for_status()
+        except Exception:
+            raise HTTPException(status_code=502, detail="Failed to fetch image")
+
+    content_type = resp.headers.get("content-type", "image/jpeg")
+    return Response(content=resp.content, media_type=content_type)
 
 
 # --- MOVIE ENDPOINTS ---

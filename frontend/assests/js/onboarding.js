@@ -48,6 +48,16 @@
     return `${API_BASE}${path}${query.size ? `?${query.toString()}` : ''}`;
   }
 
+  function proxyImage(url) {
+    const raw = String(url || '').trim();
+    if (!raw) return 'assests/LuminaLogo.png';
+    if (raw.startsWith('data:') || raw.startsWith('blob:') || raw.startsWith('assests/')) return raw;
+    if (raw.startsWith('http://') || raw.startsWith('https://')) {
+      return buildApiUrl('/discovery/image-proxy', { url: raw });
+    }
+    return raw;
+  }
+
   async function readErrorMessage(response, fallbackMessage) {
     try {
       const data = await response.json();
@@ -520,7 +530,7 @@
         const card = document.createElement('div');
         card.className = 'selection-card';
         card.innerHTML = `
-        <img src="${item.image}" alt="${item.name}" onerror="this.src='assests/LuminaLogo.png'" style="border-radius: 50%; width: 100px; height: 100px; object-fit: cover; margin-bottom: 10px;">
+        <img src="${proxyImage(item.image)}" alt="${item.name}" onerror="this.src='assests/LuminaLogo.png'" style="border-radius: 50%; width: 100px; height: 100px; object-fit: cover; margin-bottom: 10px;">
         <p>${item.name}</p>
     `;
 
@@ -578,7 +588,7 @@
         card.className = 'selection-card';
         // Now using the real image path from TMDB/Google Books
         card.innerHTML = `
-                <img src="${item.image}" alt="${item.title}" onerror="this.src='assests/LuminaLogo.png'">
+          <img src="${proxyImage(item.image)}" alt="${item.title}" onerror="this.src='assests/LuminaLogo.png'">
                 <p>${item.title}</p>
             `;
 
