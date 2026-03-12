@@ -3,6 +3,7 @@ from app.routers import auth_router, recommendations, discovery, content_router,
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from app.core.security import decode_token
 from dotenv import load_dotenv
+import os
 load_dotenv()
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
@@ -13,9 +14,13 @@ from app.routers import recommendations
 
 app = FastAPI(title="Lumina API")
 
+# Parse CORS origins from environment variable
+cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:5500,http://127.0.0.1:5500").split(",")
+cors_origins = [origin.strip() for origin in cors_origins]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://127.0.0.1:5500", "http://localhost:5500", "http://localhost:8080", "http://127.0.0.1:8000"], # Added 8080 for Python http.server
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

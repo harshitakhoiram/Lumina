@@ -1,0 +1,12 @@
+{
+  "buildCommand": "echo 'Static site, no build needed'",
+  "outputDirectory": "frontend",
+  "cleanUrls": false,
+  "trailingSlash": true,
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/$1"
+    }
+  ]
+}
