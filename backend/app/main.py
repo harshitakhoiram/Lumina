@@ -1,16 +1,23 @@
+import os
+import sys
+from dotenv import load_dotenv
+
+# Ensure `app` imports resolve when service starts from repo root on Render.
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+BACKEND_DIR = os.path.dirname(CURRENT_DIR)
+if BACKEND_DIR not in sys.path:
+    sys.path.insert(0, BACKEND_DIR)
+
 from fastapi import FastAPI
 from app.routers import auth_router, recommendations, discovery, content_router, watchlist
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from app.core.security import decode_token
-from dotenv import load_dotenv
-import os
 load_dotenv()
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 from fastapi import Depends
 from sqlalchemy.orm import Session
 from app.core.database import get_db
-from app.routers import recommendations
 
 app = FastAPI(title="Lumina API")
 
