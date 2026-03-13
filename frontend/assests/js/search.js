@@ -44,10 +44,11 @@ function setSearchQueryInputValue(value) {
 }
 
 function saveSelectedContent(item) {
+    const id = normalizeId(item?.tmdb_id) || normalizeId(item?.id) || normalizeId(item?.movie_id);
     const payload = {
         ...item,
-        tmdb_id: item?.tmdb_id || item?.id || null,
-        id: item?.tmdb_id || item?.id || null,
+        tmdb_id: id,
+        id: id,
         media_type: "movie",
         content_type: "movie",
         poster_url: item?.poster_url || item?.image || item?.poster_path || ""
@@ -288,10 +289,12 @@ function normalizeSelectedItem(item) {
         ? "tv"
         : "movie";
 
+    const id = normalizeId(item?.tmdb_id) || normalizeId(item?.id) || normalizeId(item?.movie_id) || normalizeId(item?.tv_id);
+
     return {
         ...item,
-        id: item?.tmdb_id || item?.id || item?.movie_id || item?.tv_id || null,
-        tmdb_id: item?.tmdb_id || item?.id || item?.movie_id || item?.tv_id || null,
+        id,
+        tmdb_id: id,
         title: item?.title || item?.name || "Untitled",
         poster_url: item?.poster_url || item?.image || item?.poster_path || "",
         media_type: mediaType,
@@ -393,3 +396,16 @@ document.addEventListener("DOMContentLoaded", async () => {
     const query = getQueryParam("q") || sessionStorage.getItem("lastSearchQuery") || "";
     await runSearch(query);
 });
+
+function normalizeId(value) {
+    if (value == null) return null;
+    if (typeof value === "number") return String(value);
+    if (typeof value === "string") {
+        const v = value.trim();
+        return /^\d+$/.test(v) ? v : null;
+    }
+    if (typeof value === "object") {
+        return normalizeId(value.tmdb_id) || normalizeId(value.id) || normalizeId(value.movie_id) || normalizeId(value.tv_id);
+    }
+    return null;
+}

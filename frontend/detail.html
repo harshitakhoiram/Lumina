@@ -10,6 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="assests/css/dashboard.css">
     <link rel="stylesheet" href="assests/css/detail.css">
+    <link rel="stylesheet" href="assests/css/responsive.css">
     <script defer src="assests/js/watchlist-api.js"></script>
     <script defer src="assests/js/detail.js"></script>
     <script src="assests/js/api.js"></script>
@@ -20,35 +21,30 @@
 <body class="redesign">
     <div id="wrapper">
         <header class="main-header">
-            <div class="logo-box">
-                <a href="dashboard.html">
-                    <img src="assests/LuminaLogo.png" alt="Lumina Logo" class="lumina-logo">
-                </a>
-            </div>
-            <div class="search-section">
+            <a href="dashboard.html">
+                <img src="assests/LuminaLogo.png" alt="Lumina" class="lumina-logo" />
+            </a>
+
+            <form id="detailSearchForm" class="search-section">
                 <div class="search-wrapper">
-                    <span class="search-icon" aria-hidden="true">Search</span>
-                    <input type="text" placeholder="Search within Lumina..." id="navbar-query">
+                    <span class="search-icon">Search</span>
+                    <input
+                        id="detailSearchInput"
+                        type="search"
+                        placeholder="Search within Lumina..."
+                        autocomplete="off"
+                    />
                 </div>
-            </div>
+                <button id="searchSubmitBtn" class="search-submit-btn" type="submit">Search</button>
+            </form>
+
             <div class="user-section">
                 <a href="dashboard.html" class="nav-link">Home</a>
-                <div class="profile-circle"><span aria-hidden="true">U</span></div>
+                <div class="profile-circle">U</div>
             </div>
         </header>
 
-        <nav class="sub-links-bar" aria-label="Secondary navigation">
-            <div class="sub-links-inner">
-                <a href="dashboard.html" class="sub-link-item">Home</a>
-                <a href="search.html" class="sub-link-item">Search</a>
-                <a href="detail.html" class="sub-link-item active">Details</a>
-                <a href="#" class="sub-link-item">Movies</a>
-                <a href="#" class="sub-link-item">Series</a>
-                <a href="#" class="sub-link-item">Books</a>
-            </div>
-        </nav>
-
-        <div id="pagecontent" class="pagecontent">
+           <div id="pagecontent" class="pagecontent">
             <div id="content-2-wide" class="flatland">
                 <div id="main_top" class="main">
 

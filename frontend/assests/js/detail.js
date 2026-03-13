@@ -2,15 +2,38 @@ const API_BASE = window.API_BASE_URL || "http://localhost:8000";
 const IMG_BASE = "https://image.tmdb.org/t/p/original";
 const FALLBACK_IMG = "assests/LuminaLogo.png";
 
+function extractId(value) {
+    if (value == null) return null;
+    if (typeof value === "number") return String(value);
+    if (typeof value === "string") {
+        const v = value.trim();
+        if (!v || v === "[object Object]") return null;
+        return /^\d+$/.test(v) ? v : null;
+    }
+    if (typeof value === "object") {
+        return (
+            extractId(value.tmdb_id) ||
+            extractId(value.id) ||
+            extractId(value.movie_id) ||
+            extractId(value.tv_id) ||
+            extractId(value.external_id) ||
+            null
+        );
+    }
+    return null;
+}
+
 function normalizeType(value) {
-    const t = String(value || "movie").toLowerCase();
+    const raw = typeof value === "object" ? (value.media_type || value.content_type || "") : value;
+    const t = String(raw || "movie").toLowerCase();
     if (t === "tv") return "series";
-    return t;
+    if (t === "series" || t === "movie" || t === "book") return t;
+    return "movie";
 }
 
 function normalizeItem(item) {
-    const type = normalizeType(item.content_type);
-    const id = item.tmdb_id || item.external_id || item.id || item.movie_id || item.content_id || null;
+    const type = normalizeType(item?.content_type || item?.media_type);
+    const id = extractId(item?.tmdb_id) || extractId(item?.external_id) || extractId(item?.id) || extractId(item?.movie_id) || extractId(item?.content_id);
     return {
         ...item,
         id,
@@ -118,11 +141,12 @@ function renderCastTable(cast) {
 }
 
 async function fetchContentDetails(item) {
-    const type = normalizeType(item.content_type);
-    const id = item.id;
+    const normalized = normalizeItem(item);
+    const type = normalized.content_type;
+    const id = normalized.id;
 
     if (!id) {
-        throw new Error("Missing content id");
+        throw new Error("Missing/invalid content id");
     }
 
     let detailUrl = `${API_BASE}/discovery/movie/${id}`;
@@ -138,8 +162,9 @@ async function fetchContentDetails(item) {
 }
 
 async function fetchSimilar(item) {
-    const type = normalizeType(item.content_type);
-    const id = item.id;
+    const normalized = normalizeItem(item);
+    const type = normalized.content_type;
+    const id = normalized.id;
     if (!id) return [];
 
     let similarUrl = `${API_BASE}/discovery/movies/similar/${id}`;
@@ -152,6 +177,77 @@ async function fetchSimilar(item) {
     const payload = await res.json();
     return Array.isArray(payload) ? payload : (payload.items || []);
 }
+
+function bindDetailSearchBar() {
+    const form =
+        document.getElementById("dashboardSearchForm") ||
+        document.getElementById("searchPageSearchForm") ||
+        document.querySelector(".search-section form");
+
+    const input =
+        document.getElementById("searchInput") ||
+        document.getElementById("searchQueryInput") ||
+        document.querySelector('.search-section input[type="text"], .search-section input[type="search"]');
+
+    const button =
+        document.getElementById("searchSubmitBtn") ||
+        document.querySelector(".search-submit-btn, .search-section button[type='submit']");
+
+    if (!input) return;
+
+    if (button) {
+        button.style.display = "inline-flex";
+        button.style.visibility = "visible";
+        button.style.opacity = "1";
+        button.disabled = false;
+    }
+
+    const submitSearch = () => {
+        const q = String(input.value || "").trim();
+        if (!q) return;
+        sessionStorage.removeItem("selectedSearchContent");
+        sessionStorage.setItem("lastSearchQuery", q);
+        window.location.href = `search.html?q=${encodeURIComponent(q)}`;
+    };
+
+    if (form) {
+        form.addEventListener("submit", (e) => {
+            e.preventDefault();
+            submitSearch();
+        });
+    }
+
+    input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            submitSearch();
+        }
+    });
+
+    if (button) {
+        button.addEventListener("click", (e) => {
+            e.preventDefault();
+            submitSearch();
+        });
+    }
+}
+
+function bindDetailSearch() {
+  const form = document.getElementById("detailSearchForm");
+  const input = document.getElementById("detailSearchInput");
+  if (!form || !input) return;
+
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const q = input.value.trim();
+    if (!q) return;
+    window.location.href = `search.html?q=${encodeURIComponent(q)}`;
+  });
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    bindDetailSearchBar();
+});
 
 document.addEventListener("DOMContentLoaded", async () => {
     const rawData = sessionStorage.getItem("selectedContent");
