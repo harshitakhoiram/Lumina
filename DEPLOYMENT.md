@@ -38,8 +38,10 @@ git push -u origin main
 3. Use these settings:
    - **Name**: `lumina-api`
    - **Runtime**: Python 3
-   - **Build Command**: `pip install -r backend/requirements.txt`
-   - **Start Command**: `uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT`
+  - **Root Directory**: `backend`
+  - **Build Command**: `pip install -r requirements.txt`
+  - **Start Command**: `python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+  - **Health Check Path**: `/health`
 4. Add environment variables:
    ```
    DATABASE_URL=postgresql://...  (from step 2)

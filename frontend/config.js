@@ -5,9 +5,11 @@
 (function() {
   // Production API URL (update with your Render backend URL)
   // Example: https://lumina-api-xxxx.onrender.com
-  const API_URL = window.location.hostname === 'localhost' 
-    ? 'http://localhost:8000'
-    : 'https://lumina-spzz.onrender.com'; // REPLACE THIS
+  const host = window.location.hostname;
+  const isLocalHost = host === 'localhost' || host === '127.0.0.1' || host === '::1';
+  const API_URL = isLocalHost
+    ? 'http://127.0.0.1:8000'
+    : 'https://lumina-spzz.onrender.com';
 
   // Make API_BASE_URL globally available
   window.API_BASE_URL = API_URL;

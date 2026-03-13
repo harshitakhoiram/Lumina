@@ -18,9 +18,10 @@
 - [ ] **Step 3:** Deploy Backend Web Service
   - Create new Web Service in Render
   - Connect GitHub repo
-  - **Build Command:** `pip install -r backend/requirements.txt`
-  - **Start Command:** `uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT`
-  - **Root Directory:** `.`
+  - **Root Directory:** `backend`
+  - **Build Command:** `pip install -r requirements.txt`
+  - **Start Command:** `python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+  - **Health Check Path:** `/health`
 
 - [ ] **Step 4:** Set Environment Variables in Render
   ```

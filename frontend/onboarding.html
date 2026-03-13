@@ -82,6 +82,11 @@
         </div>
       </div>
 
+      <div id="step2Loader" class="step-loader hidden-step" aria-live="polite">
+        <div class="step-loader-spinner"></div>
+        <p id="step2LoaderMessage">Loading your genres...</p>
+      </div>
+
       <!-- conditional genre block (video or books) -->
       <div id="conditionalDevBlock" class="conditional-group hidden-step">
         <label id="genreLabel" style="text-transform:none; font-weight:600; color:#ff751f;"><i class="fas fa-star"></i>
@@ -99,11 +104,18 @@
       <div class="step-title">Preferred language <span class="gold-accent">💬</span></div>
       <div class="step-caption" id="step3Caption">step 3/7 – which language do you watch/read in?</div>
 
-      <div class="radio-group" id="languageOptions">
-        <label class="radio-option"><input type="radio" name="language" value="en" checked> <span>English</span></label>
-        <label class="radio-option"><input type="radio" name="language" value="hi"> <span>Hindi</span></label>
-        <label class="radio-option"><input type="radio" name="language" value="es"> <span>Spanish</span></label>
-        <label class="radio-option"><input type="radio" name="language" value="fr"> <span>French</span></label>
+      <div id="step3Loader" class="step-loader hidden-step" aria-live="polite">
+        <div class="step-loader-spinner"></div>
+        <p id="step3LoaderMessage">Loading language options...</p>
+      </div>
+
+      <div id="step3Content" class="hidden-step">
+        <div class="radio-group" id="languageOptions">
+          <label class="radio-option"><input type="radio" name="language" value="en" checked> <span>English</span></label>
+          <label class="radio-option"><input type="radio" name="language" value="hi"> <span>Hindi</span></label>
+          <label class="radio-option"><input type="radio" name="language" value="es"> <span>Spanish</span></label>
+          <label class="radio-option"><input type="radio" name="language" value="fr"> <span>French</span></label>
+        </div>
       </div>
     </div>
 

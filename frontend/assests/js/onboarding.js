@@ -30,6 +30,11 @@
   const interestSelect = document.getElementById("interestSelect");
   const conditionalBlock = document.getElementById("conditionalDevBlock");
   const hintSpan = document.getElementById("hintText");
+  const step2Loader = document.getElementById("step2Loader");
+  const step2LoaderMessage = document.getElementById("step2LoaderMessage");
+  const step3Loader = document.getElementById("step3Loader");
+  const step3LoaderMessage = document.getElementById("step3LoaderMessage");
+  const step3Content = document.getElementById("step3Content");
   const languageContainer = document.getElementById("languageOptions");
   const genreContainer = document.getElementById("genreOptions");
   const genreLabel = document.getElementById("genreLabel");
@@ -92,6 +97,42 @@
   const allowedOnboardingLanguages = [
     'en', 'fr', 'de', 'zh', 'ja', 'kn', 'hi', 'te', 'ta', 'ml', 'es', 'ko', 'th'
   ];
+  let optionsLoading = false;
+  let optionsError = '';
+  let optionsRequestToken = 0;
+
+  function setOptionsStatus(interest, { loading = false, error = '' } = {}) {
+    const selectedInterest = interest || interestSelect.value;
+    optionsLoading = loading;
+    optionsError = error;
+
+    const canShowConditionalBlock = !loading && !error && (selectedInterest === 'video' || selectedInterest === 'books');
+    conditionalBlock.classList.toggle('hidden-step', !canShowConditionalBlock);
+
+    step2Loader.classList.toggle('hidden-step', !loading && !error);
+    step3Loader.classList.toggle('hidden-step', !loading && !error);
+    step3Content.classList.toggle('hidden-step', loading || Boolean(error));
+
+    if (step2LoaderMessage) {
+      step2LoaderMessage.textContent = error || 'Loading your genres...';
+    }
+    if (step3LoaderMessage) {
+      step3LoaderMessage.textContent = error || 'Loading language options...';
+    }
+
+    interestSelect.disabled = loading;
+    updateNextState();
+  }
+
+  function applyInterestOptions(interest, options) {
+    const genres = Array.isArray(options?.genres) ? options.genres : [];
+    const languages = Array.isArray(options?.languages) ? options.languages : [];
+
+    renderGenres(genres);
+    renderLanguageOptions(languages);
+    updateConditionalAndHint();
+    setOptionsStatus(interest, { loading: false, error: '' });
+  }
 
   // movie/book data sample
   let selectedLanguages = ['en'];
@@ -189,27 +230,33 @@
 
   async function loadDynamicOptionsForInterest(interest) {
     if (!interest) return;
-    if (!optionsCache[interest]) {
-      try {
-        const response = await fetch(buildApiUrl('/discovery/onboarding/options', { type: interest }));
-        if (response.ok) {
-          optionsCache[interest] = await response.json();
-        }
-      } catch (error) {
-        console.warn('Failed to load onboarding options', error);
-      }
+
+    if (optionsCache[interest]) {
+      applyInterestOptions(interest, optionsCache[interest]);
+      return;
     }
 
-    const options = optionsCache[interest] || {};
-    const genres = Array.isArray(options.genres) && options.genres.length
-      ? options.genres
-      : (interest === 'books' ? fallbackBookGenres : fallbackVideoGenres);
-    const languages = Array.isArray(options.languages) && options.languages.length
-      ? options.languages
-      : allowedOnboardingLanguages;
+    const requestToken = ++optionsRequestToken;
+    setOptionsStatus(interest, { loading: true, error: '' });
 
-    renderGenres(genres);
-    renderLanguageOptions(languages);
+    try {
+      const response = await fetch(buildApiUrl('/discovery/onboarding/options', { type: interest }));
+      if (!response.ok) {
+        throw new Error(await readErrorMessage(response, 'Could not load onboarding options'));
+      }
+      optionsCache[interest] = await response.json();
+    } catch (error) {
+      if (requestToken !== optionsRequestToken) return;
+      console.warn('Failed to load onboarding options', error);
+      setOptionsStatus(interest, {
+        loading: false,
+        error: error?.message || 'Could not load onboarding options. Please wait a moment and try again.'
+      });
+      return;
+    }
+
+    if (requestToken !== optionsRequestToken) return;
+    applyInterestOptions(interest, optionsCache[interest]);
   }
 
   // user preferences object to track all selections across steps
@@ -418,11 +465,6 @@
 
   function updateConditionalAndHint() {
     const interest = interestSelect.value;
-    if (interest === "video" || interest === "books") {
-      conditionalBlock.classList.remove("hidden-step");
-    } else {
-      conditionalBlock.classList.add("hidden-step");
-    }
 
     if (interest === 'video') {
       genreLabel.innerHTML = '<i class="fas fa-star"></i> favorite genre?';
@@ -446,7 +488,6 @@
   interestSelect.addEventListener("change", () => {
     userPrefs.interest = interestSelect.value;
     loadDynamicOptionsForInterest(userPrefs.interest);
-    updateConditionalAndHint();
     // when type changes, clear previous selections
     selectedItems.clear();
     if (currentStep === 4) renderGrid();
@@ -619,6 +660,10 @@
           emailEl && emailEl.value.trim() &&
           pwdEl && pwdEl.value);
     }
+    if (currentStep === 2 || currentStep === 3) {
+      nextBtn.disabled = optionsLoading || Boolean(optionsError);
+      return;
+    }
     if (currentStep === 4) {
       nextBtn.disabled = selectedItems.size < 3;
     }
@@ -642,8 +687,7 @@
   // init
   showStep(1);
   userPrefs.interest = interestSelect.value;
-  loadDynamicOptionsForInterest(userPrefs.interest).then(() => {
-    updateConditionalAndHint();
-  });
+  setOptionsStatus(userPrefs.interest, { loading: true, error: '' });
+  loadDynamicOptionsForInterest(userPrefs.interest);
   updateNextState();
 })();
