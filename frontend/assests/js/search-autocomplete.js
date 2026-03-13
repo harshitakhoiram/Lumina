@@ -107,7 +107,13 @@
         const chooseItem = (item) => {
             input.value = item.title || "";
             hideDropdown();
-            if (typeof onSelect === "function") onSelect(item);
+            if (typeof onSelect === "function") {
+                onSelect(item);
+            } else {
+                // default: go to search page
+                const q = (item.title || "").trim();
+                if (q) window.location.href = `search.html?q=${encodeURIComponent(q)}`;
+            }
         };
 
         const renderDropdown = () => {

@@ -2,14 +2,17 @@ const API_BASE = window.API_BASE_URL || "http://localhost:8000";
 const IMG_BASE = "https://image.tmdb.org/t/p/original";
 const FALLBACK_IMG = "assests/LuminaLogo.png";
 
+/* ----------------------------- Normalizers ----------------------------- */
 function extractId(value) {
     if (value == null) return null;
     if (typeof value === "number") return String(value);
+
     if (typeof value === "string") {
         const v = value.trim();
         if (!v || v === "[object Object]") return null;
         return /^\d+$/.test(v) ? v : null;
     }
+
     if (typeof value === "object") {
         return (
             extractId(value.tmdb_id) ||
@@ -17,23 +20,33 @@ function extractId(value) {
             extractId(value.movie_id) ||
             extractId(value.tv_id) ||
             extractId(value.external_id) ||
+            extractId(value.content_id) ||
             null
         );
     }
+
     return null;
 }
 
 function normalizeType(value) {
     const raw = typeof value === "object" ? (value.media_type || value.content_type || "") : value;
     const t = String(raw || "movie").toLowerCase();
+
     if (t === "tv") return "series";
     if (t === "series" || t === "movie" || t === "book") return t;
+
     return "movie";
 }
 
 function normalizeItem(item) {
     const type = normalizeType(item?.content_type || item?.media_type);
-    const id = extractId(item?.tmdb_id) || extractId(item?.external_id) || extractId(item?.id) || extractId(item?.movie_id) || extractId(item?.content_id);
+    const id =
+        extractId(item?.tmdb_id) ||
+        extractId(item?.external_id) ||
+        extractId(item?.id) ||
+        extractId(item?.movie_id) ||
+        extractId(item?.content_id);
+
     return {
         ...item,
         id,
@@ -41,8 +54,9 @@ function normalizeItem(item) {
     };
 }
 
+/* ------------------------------- Helpers ------------------------------- */
 function pickPosterUrl(item) {
-    const posterPath = item.poster_path || item.image || item.poster_url || "";
+    const posterPath = item?.poster_path || item?.image || item?.poster_url || "";
     if (!posterPath) return FALLBACK_IMG;
     return posterPath.startsWith("http") ? posterPath : `${IMG_BASE}${posterPath}`;
 }
@@ -65,12 +79,32 @@ function formatVotes(votes) {
     return count.toLocaleString("en-US");
 }
 
+function cleanSearchQuery(value) {
+    let q = String(value || "").replace(/\s+/g, " ").trim();
+
+    // remove suffixes like "Movie · 2025", "TV • 2024"
+    q = q.replace(/\s*[•·|-]\s*(movie|tv|series|show|book)?\s*\d{4}\s*$/i, "");
+    q = q.replace(/\s*(movie|tv|series|show|book)\s*$/i, "");
+
+    return q.trim();
+}
+
+function goToSearch(query) {
+    const q = cleanSearchQuery(query);
+    if (!q) return;
+    sessionStorage.removeItem("selectedSearchContent");
+    sessionStorage.setItem("lastSearchQuery", q);
+    window.location.href = `search.html?q=${encodeURIComponent(q)}`;
+}
+
+/* ------------------------------ Renderers ------------------------------ */
 function renderSimilarVibe(items) {
     const container = document.getElementById("similarVibeContainer");
     if (!container) return;
 
     container.innerHTML = "";
-    if (!items.length) {
+
+    if (!Array.isArray(items) || !items.length) {
         container.innerHTML = "<p class='no-data'>No similar matches found.</p>";
         return;
     }
@@ -80,6 +114,7 @@ function renderSimilarVibe(items) {
         const row = document.createElement("button");
         row.className = "similar-item-mini";
         row.type = "button";
+
         row.addEventListener("click", () => {
             sessionStorage.setItem("selectedContent", JSON.stringify(item));
             window.location.reload();
@@ -87,6 +122,7 @@ function renderSimilarVibe(items) {
 
         const imageUrl = pickPosterUrl(item);
         const year = (item.release_date || "").split("-")[0] || "-";
+
         row.innerHTML = `
             <img src="${imageUrl}" alt="${item.title || "Similar title"}" class="mini-poster">
             <div class="mini-info">
@@ -113,21 +149,21 @@ function renderCastTable(cast) {
 
     table.innerHTML = "";
 
-    cast.slice(0, 10).forEach((person, index) => {
+    (cast || []).slice(0, 10).forEach((person, index) => {
         const row = table.insertRow();
         row.className = index % 2 === 0 ? "even" : "odd";
 
-        const profileImg = person.profile_path
+        const profileImg = person?.profile_path
             ? `https://image.tmdb.org/t/p/w185${person.profile_path}`
-            : (person.image || FALLBACK_IMG);
+            : (person?.image || FALLBACK_IMG);
 
         row.innerHTML = `
             <td style="width:50px">
-                <img src="${profileImg}" style="width:40px; height:40px; border-radius:50%; object-fit:cover;" alt="${person.name || "Cast"}">
+                <img src="${profileImg}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;" alt="${person?.name || "Cast"}">
             </td>
-            <td><strong>${person.name || person}</strong></td>
+            <td><strong>${person?.name || "Unknown"}</strong></td>
             <td style="color:#666">as</td>
-            <td>${person.character || "Cast Member"}</td>
+            <td>${person?.character || "Cast Member"}</td>
         `;
 
         const img = row.querySelector("img");
@@ -140,23 +176,20 @@ function renderCastTable(cast) {
     });
 }
 
+/* ------------------------------- API calls ------------------------------ */
 async function fetchContentDetails(item) {
     const normalized = normalizeItem(item);
     const type = normalized.content_type;
     const id = normalized.id;
 
-    if (!id) {
-        throw new Error("Missing/invalid content id");
-    }
+    if (!id) throw new Error("Missing/invalid content id");
 
     let detailUrl = `${API_BASE}/discovery/movie/${id}`;
     if (type === "series") detailUrl = `${API_BASE}/discovery/series/${id}`;
     if (type === "book") detailUrl = `${API_BASE}/discovery/book/${id}`;
 
     const response = await fetch(detailUrl);
-    if (!response.ok) {
-        throw new Error(`Failed detail fetch: ${response.status}`);
-    }
+    if (!response.ok) throw new Error(`Failed detail fetch: ${response.status}`);
 
     return response.json();
 }
@@ -178,78 +211,55 @@ async function fetchSimilar(item) {
     return Array.isArray(payload) ? payload : (payload.items || []);
 }
 
-function bindDetailSearchBar() {
-    const form =
-        document.getElementById("dashboardSearchForm") ||
-        document.getElementById("searchPageSearchForm") ||
-        document.querySelector(".search-section form");
+/* ----------------------------- Search wiring ---------------------------- */
+function initDetailSearch() {
+    const form = document.getElementById("detailSearchForm");
+    const input = document.getElementById("detailSearchInput");
+    const dropdown = document.getElementById("detailSearchDropdown");
 
-    const input =
-        document.getElementById("searchInput") ||
-        document.getElementById("searchQueryInput") ||
-        document.querySelector('.search-section input[type="text"], .search-section input[type="search"]');
+    if (!form || !input) return;
 
-    const button =
-        document.getElementById("searchSubmitBtn") ||
-        document.querySelector(".search-submit-btn, .search-section button[type='submit']");
-
-    if (!input) return;
-
-    if (button) {
-        button.style.display = "inline-flex";
-        button.style.visibility = "visible";
-        button.style.opacity = "1";
-        button.disabled = false;
-    }
-
-    const submitSearch = () => {
-        const q = String(input.value || "").trim();
-        if (!q) return;
-        sessionStorage.removeItem("selectedSearchContent");
-        sessionStorage.setItem("lastSearchQuery", q);
-        window.location.href = `search.html?q=${encodeURIComponent(q)}`;
-    };
-
-    if (form) {
-        form.addEventListener("submit", (e) => {
-            e.preventDefault();
-            submitSearch();
-        });
-    }
-
-    input.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") {
-            e.preventDefault();
-            submitSearch();
-        }
+    // submit via button / Enter
+    form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        goToSearch(input.value);
     });
 
-    if (button) {
-        button.addEventListener("click", (e) => {
-            e.preventDefault();
-            submitSearch();
+    // use existing shared autocomplete
+    if (typeof window.initSearchAutocomplete === "function") {
+        window.initSearchAutocomplete({
+            inputId: "detailSearchInput",
+            formId: "detailSearchForm",
+            dropdownId: "detailSearchDropdown",
+            onSelect: (item) => {
+                const title = item?.title || item?.name || input.value;
+                goToSearch(title);
+            }
+        });
+    }
+
+    // fallback click handler if autocomplete library doesn't invoke onSelect
+    if (dropdown) {
+        dropdown.addEventListener("click", (e) => {
+            const row = e.target.closest("[data-title], .autocomplete-item, .suggestion-item, li, button, a");
+            if (!row) return;
+
+            const title =
+                row.getAttribute("data-title") ||
+                row.dataset?.title ||
+                row.querySelector?.(".title, .suggestion-title, .auto-title")?.textContent ||
+                row.textContent ||
+                input.value;
+
+            goToSearch(title);
         });
     }
 }
 
-function bindDetailSearch() {
-  const form = document.getElementById("detailSearchForm");
-  const input = document.getElementById("detailSearchInput");
-  if (!form || !input) return;
-
-  form.addEventListener("submit", (e) => {
-    e.preventDefault();
-    const q = input.value.trim();
-    if (!q) return;
-    window.location.href = `search.html?q=${encodeURIComponent(q)}`;
-  });
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-    bindDetailSearchBar();
-});
-
+/* -------------------------------- Boot --------------------------------- */
 document.addEventListener("DOMContentLoaded", async () => {
+    initDetailSearch();
+
     const rawData = sessionStorage.getItem("selectedContent");
     if (!rawData) {
         setText("dynTitle", "No content selected");
@@ -271,16 +281,18 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (watchlistBtn) {
         watchlistBtn.addEventListener("click", async () => {
             if (!window.addToWatchlist) return;
+
             watchlistBtn.disabled = true;
             const previous = watchlistBtn.innerText;
             watchlistBtn.innerText = "Saving...";
+
             try {
                 await window.addToWatchlist(normalizeItem(selected));
                 watchlistBtn.innerText = "Added";
             } catch (_error) {
                 watchlistBtn.innerText = "Retry Add";
             } finally {
-                window.setTimeout(() => {
+                setTimeout(() => {
                     watchlistBtn.disabled = false;
                     watchlistBtn.innerText = previous;
                 }, 1200);
@@ -297,6 +309,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const posterEl = document.getElementById("dynPoster");
     const sidebarImageEl = document.getElementById("sidebarImage");
+
     if (posterEl) {
         posterEl.src = posterUrl;
         posterEl.onerror = () => {
@@ -304,6 +317,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             posterEl.src = FALLBACK_IMG;
         };
     }
+
     if (sidebarImageEl) {
         sidebarImageEl.src = posterUrl;
         sidebarImageEl.onerror = () => {
@@ -319,7 +333,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         setText("dynRating", full.rating || selected.rating || "-");
         setText("dynVoteCount", formatVotes(full.vote_count || selected.vote_count));
         setText("dynOverview", full.overview || "No description available.");
-        setText("dynGenres", full.genres && full.genres.length ? full.genres.join(", ") : "Genres unavailable");
+        setText("dynGenres", full.genres?.length ? full.genres.join(", ") : "Genres unavailable");
         setText("dynRuntime", formatRuntime(type, full.runtime || selected.runtime));
         setText("dynReleaseDate", full.release_date || full.published_date || "Release date unavailable");
 
@@ -329,13 +343,15 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (type === "book") {
             setText("dynDirector", (full.authors || []).join(", ") || "Unknown");
             setText("dynStars", full.publisher || "Not available");
+
             const castTable = document.getElementById("dynCastTable");
-            if (castTable && castTable.parentElement) {
+            if (castTable?.parentElement) {
                 castTable.parentElement.style.display = "none";
             }
         } else {
             setText("dynDirector", full.director || "Unknown");
-            if (full.cast && full.cast.length) {
+
+            if (full.cast?.length) {
                 const stars = full.cast.slice(0, 4).map((c) => c.name || c).join(", ");
                 setText("dynStars", stars);
                 renderCastTable(full.cast);
