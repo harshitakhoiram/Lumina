@@ -22,8 +22,25 @@ from app.core.database import get_db
 app = FastAPI(title="Lumina API")
 
 # Parse CORS origins from environment variable
-cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:5500,http://127.0.0.1:5500").split(",")
-cors_origins = [origin.strip() for origin in cors_origins]
+_raw_origins = os.getenv("CORS_ORIGINS", "http://localhost:5500,http://127.0.0.1:5500")
+cors_origins = [o.strip() for o in _raw_origins.split(",") if o.strip()]
+
+# Always allow localhost variants for local dev
+_local_origins = [
+    "http://localhost:5500",
+    "http://127.0.0.1:5500",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "null",  # file:// protocol (VS Code Live Preview, etc.)
+]
+for _o in _local_origins:
+    if _o not in cors_origins:
+        cors_origins.append(_o)
+
+# If a FRONTEND_URL env var is set (e.g. the Render static site URL), add it too
+_frontend_url = os.getenv("FRONTEND_URL", "").strip()
+if _frontend_url and _frontend_url not in cors_origins:
+    cors_origins.append(_frontend_url)
 
 app.add_middleware(
     CORSMiddleware,
