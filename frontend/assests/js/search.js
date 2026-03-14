@@ -382,3 +382,16 @@ document.addEventListener("DOMContentLoaded", async () => {
     const query = getQueryParam("q") || sessionStorage.getItem("lastSearchQuery") || "";
     await runSearch(query);
 });
+
+function normalizeId(value) {
+    if (value == null) return null;
+    if (typeof value === "number") return String(value);
+    if (typeof value === "string") {
+        const v = value.trim();
+        return /^\d+$/.test(v) ? v : null;
+    }
+    if (typeof value === "object") {
+        return normalizeId(value.tmdb_id) || normalizeId(value.id) || normalizeId(value.movie_id) || normalizeId(value.tv_id);
+    }
+    return null;
+}
