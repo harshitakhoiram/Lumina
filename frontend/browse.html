@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Outfit:wght@300;400;600;700&display=swap"
+    rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Browse - Lumina</title>
+  <script src="config.js?v=20260314-7"></script>
+  <link rel="stylesheet" href="assests/css/dashboard.css?v=20260314-7">
+  
+  <script defer src="assests/js/search-autocomplete.js?v=20260314-7"></script>
+  <script defer src="assests/js/watchlist-api.js?v=20260314-7"></script>
+  <style>
+    .browse-container {
+      padding: 120px 5% 50px;
+    }
+    .browse-header {
+      margin-bottom: 40px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+    .back-btn {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 999px;
+      cursor: pointer;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.3s;
+    }
+    .back-btn:hover {
+      background: white;
+      color: black;
+    }
+    .grid-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 30px;
+    }
+  </style>
+</head>
+<body>
+  <div class="main-wrapper">
+    <!-- HEADER -->
+    <header class="main-header">
+      <div class="logo-box">
+        <a href="dashboard.html">
+          <img src="assests/LuminaLogo.png" alt="Lumina Logo" class="lumina-logo">
+        </a>
+      </div>
+      <div class="search-section">
+        <form id="dashboardSearchForm" class="search-wrapper search-form-shell" action="search.html" method="get">
+          <span class="search-icon" aria-hidden="true">Search</span>
+          <input
+            type="text"
+            id="navbar-query"
+            name="q"
+            placeholder="Search within Lumina..."
+            autocomplete="off"
+          >
+          <button type="submit" class="search-submit-btn">Search</button>
+          <div id="dashboardSearchSuggestions" class="search-suggestions" hidden></div>
+        </form>
+      </div>
+      <div class="user-section">
+        <a href="dashboard.html" class="nav-link">Home</a>
+        <div class="profile-circle"><span aria-hidden="true">U</span></div>
+      </div>
+    </header>
+
+    <main class="browse-container">
+      <div class="browse-header">
+        <h1 id="category-title">All Content</h1>
+      </div>
+
+      <div class="grid-container" id="category-grid">
+        <!-- JS will inject grid items here -->
+      </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer>
+      <div class="sub-links">
+        <div class="sub-links-credit">Harshita & Athira © 2026</div>
+      </div>
+    </footer>
+  </div>
+
+  <script src="assests/js/browse.js"></script>
+</body>
+</html>

@@ -4,8 +4,8 @@
   <meta charset="utf-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <title>Lumina</title>
-  <script src="config.js"></script>
-  <link rel="stylesheet" href="assests/css/dashboard.css">
+  <script src="config.js?v=20260314-6"></script>
+  <link rel="stylesheet" href="assests/css/dashboard.css?v=20260314-6">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link
@@ -13,9 +13,9 @@
     rel="stylesheet">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <script defer src="assests/js/search-autocomplete.js"></script>
-  <script defer src="assests/js/watchlist-api.js"></script>
-  <script defer src="assests/js/dashboard.js"></script>
+  <script defer src="assests/js/search-autocomplete.js?v=20260314-6"></script>
+  <script defer src="assests/js/watchlist-api.js?v=20260314-6"></script>
+  <script defer src="assests/js/dashboard.js?v=20260314-6"></script>
 </head>
 
 <body>
@@ -76,15 +76,43 @@
         </div>
       </div>
 
-      <h1 id="header-genre">Explore</h1>
-      <div class="box" id="container-genre">
-        <!-- JS will inject items here -->
+      <section class="dashboard-controls" id="dashboardControls">
+        <div class="media-toggle" id="mediaToggle" role="tablist" aria-label="Dashboard content filter">
+          <button type="button" class="media-toggle-btn active" data-media-mode="all" aria-pressed="true">All</button>
+          <button type="button" class="media-toggle-btn" data-media-mode="movie" aria-pressed="false">Movies</button>
+          <button type="button" class="media-toggle-btn" data-media-mode="series" aria-pressed="false">Series</button>
+        </div>
+        <p class="media-toggle-copy" id="mediaToggleCopy">Choose mixed picks, movie-only rows, or series-only rows.</p>
+      </section>
+
+      <div class="section-header-row">
+        <h1 id="header-genre">Explore</h1>
+        <a href="#" class="see-all-link" id="seeAllGenre">
+          See All <span class="see-all-arrow">&#10132;</span>
+        </a>
       </div>
+      <div class="row-carousel" id="carousel-genre">
+        <button class="carousel-nav prev" id="genrePrev">&#10094;</button>
+        <div class="carousel-strip" id="container-genre">
+          <!-- JS will inject items here -->
+        </div>
+        <button class="carousel-nav next" id="genreNext">&#10095;</button>
+      </div>
+
       <div id="genre-sections-extra"></div>
 
-      <h1 id="header-interest">Since you like</h1>
-      <div class="box" id="container-interest">
-        <!-- JS will inject items here -->
+      <div class="section-header-row">
+        <h1 id="header-interest">Since you like</h1>
+        <a href="#" class="see-all-link" id="seeAllInterest">
+          See All <span class="see-all-arrow">&#10132;</span>
+        </a>
+      </div>
+      <div class="row-carousel" id="carousel-interest">
+        <button class="carousel-nav prev" id="interestPrev">&#10094;</button>
+        <div class="carousel-strip" id="container-interest">
+          <!-- JS will inject items here -->
+        </div>
+        <button class="carousel-nav next" id="interestNext">&#10095;</button>
       </div>
 
       <div id="book-rec-section" style="display: none; margin: 40px 0;">
@@ -97,7 +125,7 @@
       <section class="fan-block" id="fan-block">
         <div class="fan-header">
           <h1 id="header-global">Fan favorites</h1>
-          <p>This week's top picks</p>
+          <p id="fan-subtitle">This week's top picks</p>
         </div>
         <div class="fan-carousel">
           <button class="fan-nav fan-prev" id="fanPrev" aria-label="Previous">&#10094;</button>

@@ -176,6 +176,10 @@ async def get_onboarding_people(payload: dict):
 async def get_trending():
     return await movie_service.get_trending_movies()
 
+@router.get("/series/trending")
+async def get_trending_series():
+    return await movie_service.get_trending_series()
+
 @router.get("/movies/search")
 async def search_movies(q: str = Query(..., min_length=1)):
     return await movie_service.search_movies(q)

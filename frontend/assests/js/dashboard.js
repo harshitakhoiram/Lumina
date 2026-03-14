@@ -2,6 +2,7 @@
 const API_BASE_URL = window.API_BASE_URL || "http://localhost:8000";
 const currentToken = localStorage.getItem("access_token");
 const userId = localStorage.getItem("user_id");
+const DASHBOARD_MEDIA_MODE_KEY = "dashboard_media_mode";
 
 // 1. GLOBAL STATE & AUTH CHECK
 if (!currentToken) {
@@ -11,9 +12,128 @@ if (!currentToken) {
 let heroIndex = 0;
 let heroData = [];
 let heroNavInitialized = false;
+let currentMediaMode = normalizeMediaMode(localStorage.getItem(DASHBOARD_MEDIA_MODE_KEY) || "all");
+
+function normalizeMediaMode(value) {
+    const normalized = String(value || "all").toLowerCase();
+    if (["movie", "movies"].includes(normalized)) return "movie";
+    if (["series", "tv", "shows"].includes(normalized)) return "series";
+    return "all";
+}
 
 function normalizeContentType(value) {
     return String(value || "movie").toLowerCase();
+}
+
+function syncMediaToggle(availableModes = ["all", "movie", "series"], mode = currentMediaMode) {
+    const controls = document.getElementById("dashboardControls");
+    const buttons = Array.from(document.querySelectorAll(".media-toggle-btn"));
+    const subtitle = document.getElementById("mediaToggleCopy");
+    if (!controls || !buttons.length) return;
+
+    const allowed = new Set((availableModes || []).map(normalizeMediaMode));
+    const resolvedMode = allowed.has(normalizeMediaMode(mode)) ? normalizeMediaMode(mode) : normalizeMediaMode(availableModes[0] || "all");
+    currentMediaMode = resolvedMode;
+    localStorage.setItem(DASHBOARD_MEDIA_MODE_KEY, resolvedMode);
+
+    buttons.forEach((button) => {
+        const buttonMode = normalizeMediaMode(button.dataset.mediaMode);
+        const isAllowed = allowed.has(buttonMode);
+        const isActive = buttonMode === resolvedMode;
+        button.hidden = !isAllowed;
+        button.disabled = !isAllowed;
+        button.classList.toggle("active", isActive);
+        button.setAttribute("aria-pressed", String(isActive));
+    });
+
+    controls.hidden = allowed.size <= 1;
+    if (subtitle) {
+        subtitle.textContent = resolvedMode === "series"
+            ? "Showing series-first recommendations across the dashboard."
+            : resolvedMode === "movie"
+                ? "Showing movie-first recommendations across the dashboard."
+                : "Showing mixed picks from both movies and series.";
+    }
+}
+
+function bindMediaToggle() {
+    const buttons = document.querySelectorAll(".media-toggle-btn");
+    buttons.forEach((button) => {
+        button.addEventListener("click", () => {
+            const nextMode = normalizeMediaMode(button.dataset.mediaMode);
+            if (nextMode === currentMediaMode) return;
+            currentMediaMode = nextMode;
+            localStorage.setItem(DASHBOARD_MEDIA_MODE_KEY, currentMediaMode);
+            syncMediaToggle(["all", "movie", "series"], currentMediaMode);
+            loadDailyRecommendations();
+        });
+    });
+}
+
+function setDashboardSwitching(isSwitching) {
+    const container = document.querySelector(".main-container");
+    if (!container) return;
+    container.classList.toggle("is-switching", Boolean(isSwitching));
+
+    let loader = document.getElementById("modeSwitchLoader");
+    if (!loader) {
+        loader = document.createElement("div");
+        loader.id = "modeSwitchLoader";
+        loader.className = "mode-switch-loader";
+        loader.innerHTML = `
+            <div class="mode-loader-card" role="status" aria-live="polite">
+                <span class="mode-loader-spinner" aria-hidden="true"></span>
+                <span class="mode-loader-text">Loading recommendations...</span>
+            </div>
+        `;
+        document.body.appendChild(loader);
+    }
+
+    const text = loader.querySelector(".mode-loader-text");
+    if (text && isSwitching) {
+        const modeLabel = currentMediaMode === "series" ? "series" : (currentMediaMode === "movie" ? "movies" : "mixed");
+        text.textContent = `Loading ${modeLabel} recommendations...`;
+    }
+    loader.classList.toggle("visible", Boolean(isSwitching));
+}
+
+function updateDashboardText(mediaMode) {
+    const headerGlobal = document.getElementById("header-global");
+    const fanSubtitle = document.getElementById("fan-subtitle");
+    if (headerGlobal) {
+        headerGlobal.textContent = mediaMode === "series"
+            ? "Fan-favorite series"
+            : mediaMode === "movie"
+                ? "Fan-favorite movies"
+                : "Fan favorites";
+    }
+    if (fanSubtitle) {
+        fanSubtitle.textContent = mediaMode === "series"
+            ? "This week's most talked-about shows"
+            : mediaMode === "movie"
+                ? "This week's most talked-about films"
+                : "This week's top picks";
+    }
+}
+
+function formatContentTypeLabel(contentType) {
+    const normalized = normalizeContentType(contentType);
+    if (normalized === "series") return "Series";
+    if (normalized === "book") return "Book";
+    return "Movie";
+}
+
+function getModeHeadingSuffix() {
+    if (currentMediaMode === "series") return " Series";
+    if (currentMediaMode === "movie") return " Movies";
+    return "";
+}
+
+function createContentTypeBadge(item) {
+    const badge = document.createElement("span");
+    badge.className = "content-type-badge";
+    badge.textContent = formatContentTypeLabel(item.content_type);
+    return badge;
 }
 
 function normalizeItem(item) {
@@ -25,6 +145,39 @@ function normalizeItem(item) {
         tmdb_id: item.tmdb_id || item.external_id || item.id || null,
         content_type: contentType
     };
+}
+
+function pickNumericId(...values) {
+    for (const value of values) {
+        const str = String(value ?? "").trim();
+        if (/^\d+$/.test(str)) return str;
+    }
+    return null;
+}
+
+function filterItemsByMode(items = [], mode = currentMediaMode) {
+    const normalizedMode = normalizeMediaMode(mode);
+    const normalizedItems = items.map(normalizeItem);
+    if (normalizedMode === "series") {
+        return normalizedItems.filter((item) => item.content_type === "series");
+    }
+    if (normalizedMode === "movie") {
+        return normalizedItems.filter((item) => item.content_type === "movie");
+    }
+    return normalizedItems;
+}
+
+function filterPayloadForMode(payload, mode = currentMediaMode) {
+    const filtered = { ...payload };
+    filtered.slider = filterItemsByMode(payload.slider || [], mode);
+    filtered.genre_highlights = filterItemsByMode(payload.genre_highlights || [], mode);
+    filtered.interest_trending = filterItemsByMode(payload.interest_trending || [], mode);
+    filtered.global_top = filterItemsByMode(payload.global_top || [], mode);
+    filtered.genre_sections = (payload.genre_sections || []).map((section) => ({
+        ...section,
+        items: filterItemsByMode(section.items || [], mode)
+    }));
+    return filtered;
 }
 
 // 2. NAVIGATION & SEARCH
@@ -172,8 +325,9 @@ function renderHero() {
         finalImageUrl = imagePath.startsWith('http') ? imagePath : `${tmdbBaseUrl}${imagePath}`;
     }
 
-    const overview = item.overview
-        ? `${item.overview.substring(0, 220)}${item.overview.length > 220 ? '...' : ''}`
+    const summaryText = item.overview || item.description || "";
+    const overview = summaryText
+        ? `${summaryText.substring(0, 220)}${summaryText.length > 220 ? '...' : ''}`
         : 'Discover your next favorite on Lumina.';
     const contentType = String(item.content_type || 'movie').toLowerCase();
     const typeLabel = contentType === 'series' ? 'Series Pick' : 'Movie Pick';
@@ -205,8 +359,7 @@ function renderHero() {
     const watchlistBtn = document.getElementById("heroWatchlist");
     if (knowMoreBtn) {
         knowMoreBtn.addEventListener("click", () => {
-            sessionStorage.setItem("selectedContent", JSON.stringify(normalizeItem(item)));
-            window.location.href = "detail.html";
+            openDetailPage(item);
         });
     }
     if (watchlistBtn) {
@@ -216,16 +369,37 @@ function renderHero() {
 
 // 4. DATA FETCHING & RENDERING
 async function loadDailyRecommendations() {
+    // 1. Check Cache First
+    const cacheKey = `dashboard_data_${currentMediaMode}`;
+    const cachedData = sessionStorage.getItem(cacheKey);
+    const navigationType = window.performance?.getEntriesByType("navigation")[0]?.type;
+    
+    // Only use cache if it's NOT a manual reload
+    if (cachedData && navigationType !== "reload") {
+        console.log("Loading dashboard from session cache...");
+        try {
+            const data = JSON.parse(cachedData);
+            renderDashboardFromData(data);
+            return;
+        } catch (e) {
+            console.warn("Failed to parse cached dashboard data", e);
+        }
+    }
+
+    setDashboardSwitching(true);
     try {
-        const response = await fetch(`${API_BASE_URL}/recommendations/personalized?t=${Date.now()}`, {
+        const response = await fetch(`${API_BASE_URL}/recommendations/personalized?media_mode=${encodeURIComponent(currentMediaMode)}&t=${Date.now()}`, {
             headers: { Authorization: `Bearer ${currentToken}` },
         });
 
         if (response.ok) {
-            const data = await response.json();
+            const apiData = await response.json();
+            syncMediaToggle(apiData.available_media_modes, apiData.media_mode || currentMediaMode);
+            updateDashboardText(apiData.media_mode || currentMediaMode);
+            const data = filterPayloadForMode(apiData, currentMediaMode);
 
             // Setup Hero Section
-            heroData = (data.slider || []).map(normalizeItem);
+            heroData = data.slider || [];
             if (heroData.length > 0) {
                 renderHero();
                 initHeroNav();
@@ -233,8 +407,8 @@ async function loadDailyRecommendations() {
 
             // Render Row Grids
             renderGenreSections(data);
-            renderSection("container-interest", (data.interest_trending || []).map(normalizeItem));
-            renderSection("container-global", (data.global_top || []).map(normalizeItem));
+            renderSection("container-interest", data.interest_trending || []);
+            renderSection("container-global", data.global_top || []);
 
             // Handle Book Recommendation
             const bookSection = document.getElementById("book-rec-section");
@@ -255,24 +429,70 @@ async function loadDailyRecommendations() {
             if (recommendationHeader && data.genre_name) {
                 recommendationHeader.innerHTML = `Recommendation of the Day in <span class="gold-accent">${data.genre_name}</span>`;
             }
+
+            // 4. Save to Cache
+            sessionStorage.setItem(cacheKey, JSON.stringify(apiData));
         } else {
             fetchTrendingFallback();
         }
     } catch (error) {
         console.error("Error loading recommendations:", error);
         fetchTrendingFallback();
+    } finally {
+        window.setTimeout(() => setDashboardSwitching(false), 120);
+    }
+}
+
+function renderDashboardFromData(apiData) {
+    syncMediaToggle(apiData.available_media_modes, apiData.media_mode || currentMediaMode);
+    updateDashboardText(apiData.media_mode || currentMediaMode);
+    const data = filterPayloadForMode(apiData, currentMediaMode);
+
+    // Setup Hero Section
+    heroData = data.slider || [];
+    if (heroData.length > 0) {
+        renderHero();
+        initHeroNav();
+    }
+
+    // Render Row Grids
+    renderGenreSections(data);
+    renderSection("container-interest", data.interest_trending || []);
+    renderSection("container-global", data.global_top || []);
+
+    // Handle Book Recommendation
+    const bookSection = document.getElementById("book-rec-section");
+    if (bookSection && data.book_recommendation) {
+        bookSection.style.display = "block";
+        renderSection("container-book", [normalizeItem(data.book_recommendation)]);
+        const bookHeader = document.getElementById("header-book");
+        if (bookHeader) bookHeader.innerHTML = `Recommended Read in <span class="gold-accent">${data.genre_name}</span>`;
+    }
+
+    // Update Dynamic Headings
+    const interestHeader = document.getElementById("header-interest");
+    if (interestHeader && data.liked_title) {
+        const cleanTitle = data.liked_title.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+        interestHeader.innerHTML = `Since you like <span class="gold-accent">${cleanTitle}</span>`;
+    }
+    const recommendationHeader = document.getElementById("header-recommendation-day");
+    if (recommendationHeader && data.genre_name) {
+        recommendationHeader.innerHTML = `Recommendation of the Day in <span class="gold-accent">${data.genre_name}</span>`;
     }
 }
 
 async function fetchTrendingFallback() {
     try {
-        const response = await fetch(`${API_BASE_URL}/discovery/movies/trending`, {
+        const fallbackPath = currentMediaMode === "series"
+            ? "/discovery/series/trending"
+            : "/discovery/movies/trending";
+        const response = await fetch(`${API_BASE_URL}${fallbackPath}`, {
             headers: { Authorization: `Bearer ${currentToken}` },
         });
 
         if (response.ok) {
-            const movies = await response.json();
-            heroData = movies.map(normalizeItem);
+            const items = await response.json();
+            heroData = items.map(normalizeItem);
             renderHero();
             initHeroNav();
         }
@@ -282,10 +502,10 @@ async function fetchTrendingFallback() {
 }
 
 function renderSection(containerId, items) {
-    const container = document.getElementById(containerId);
+    const container = (typeof containerId === "string") ? document.getElementById(containerId) : containerId;
     if (!container) return;
 
-    if (containerId === "container-global") {
+    if (container.id === "container-global") {
         renderFanFavorites(items);
         return;
     }
@@ -294,10 +514,15 @@ function renderSection(containerId, items) {
 
     if (items.length === 0) {
         container.innerHTML = '<p class="loading">No matches found for this category.</p>';
+        const parentCarousel = container.closest(".row-carousel");
+        if (parentCarousel) {
+            const navs = parentCarousel.querySelectorAll(".carousel-nav");
+            navs.forEach(n => n.classList.remove("visible"));
+        }
         return;
     }
-    const tmdbBaseUrl = "https://image.tmdb.org/t/p/w500"; //will see 
-    const compactBookCard = containerId === "container-book";
+    const tmdbBaseUrl = "https://image.tmdb.org/t/p/w500";
+    const compactBookCard = container.id === "container-book";
 
     items.forEach((raw) => {
         const item = normalizeItem(raw);
@@ -330,6 +555,7 @@ function renderSection(containerId, items) {
             anchor.appendChild(textWrap);
         } else {
             anchor.appendChild(img);
+            anchor.appendChild(createContentTypeBadge(item));
         }
 
         anchor.addEventListener("click", (e) => {
@@ -337,8 +563,7 @@ function renderSection(containerId, items) {
             if (!item.id && !item.movie_id) {
                 console.error("This item is missing an ID! Check backend _format_movie_data");
             }
-            sessionStorage.setItem("selectedContent", JSON.stringify(normalizeItem(item)));
-            window.location.href = "detail.html";
+            openDetailPage(item);
         });
 
         const wlBtn = document.createElement("button");
@@ -357,6 +582,43 @@ function renderSection(containerId, items) {
         }
         container.appendChild(card);
     });
+
+    // Initialize carousel navigation if this is a carousel strip
+    if (container.classList.contains("carousel-strip")) {
+        const parent = container.parentElement;
+        if (parent && parent.classList.contains("row-carousel")) {
+            const prev = parent.querySelector(".carousel-nav.prev");
+            const next = parent.querySelector(".carousel-nav.next");
+            if (prev && next) {
+                initCarouselNavigation(container, prev, next);
+            }
+        }
+    }
+}
+
+function initCarouselNavigation(strip, prev, next) {
+    const updateArrows = () => {
+        const maxScroll = strip.scrollWidth - strip.clientWidth;
+        prev.classList.toggle("visible", strip.scrollLeft > 5);
+        next.classList.toggle("visible", strip.scrollLeft < maxScroll - 5);
+    };
+
+    const scrollByValue = () => strip.clientWidth * 0.8;
+
+    prev.onclick = (e) => {
+        e.preventDefault();
+        strip.scrollBy({ left: -scrollByValue(), behavior: "smooth" });
+    };
+
+    next.onclick = (e) => {
+        e.preventDefault();
+        strip.scrollBy({ left: scrollByValue(), behavior: "smooth" });
+    };
+
+    strip.onscroll = updateArrows;
+    window.addEventListener("resize", updateArrows);
+    // Initial check after items are rendered
+    setTimeout(updateArrows, 100);
 }
 
 function renderFanFavorites(items) {
@@ -382,14 +644,14 @@ function renderFanFavorites(items) {
         card.innerHTML = `
             <img src="${finalImageUrl}" alt="${item.title || "Fan favorite"}" loading="lazy">
             <div class="fan-meta">
+                <div class="fan-type">${formatContentTypeLabel(item.content_type)}</div>
                 <div class="fan-rating">★ ${item.rating || "-"}</div>
                 <div class="fan-title">${item.title || "Untitled"}</div>
             </div>
         `;
 
         card.addEventListener("click", () => {
-            sessionStorage.setItem("selectedContent", JSON.stringify(normalizeItem(item)));
-            window.location.href = "detail.html";
+            openDetailPage(item);
         });
 
         const wlBtn = document.createElement("button");
@@ -457,29 +719,69 @@ function initFanCarouselNav() {
     strip.addEventListener("scroll", updateFanCarouselNavState, { passive: true });
     window.addEventListener("resize", updateFanCarouselNavState);
     updateFanCarouselNavState();
+
+    // Add See All listeners
+    const seeAllGenre = document.getElementById("seeAllGenre");
+    const seeAllInterest = document.getElementById("seeAllInterest");
+
+    const navigateToBrowse = (title, cacheKey) => {
+        const fullData = sessionStorage.getItem(cacheKey);
+        if (!fullData) return;
+        const parsed = JSON.parse(fullData);
+        let items = [];
+        if (title === "Explore") {
+            items = (parsed.genre_sections && parsed.genre_sections[0]) ? parsed.genre_sections[0].items : (parsed.genre_highlights || []);
+            title = (parsed.genre_sections && parsed.genre_sections[0]) ? parsed.genre_sections[0].genre_name : (parsed.genre_name || "Explore");
+        } else if (title === "Recommended") {
+            items = parsed.interest_trending || [];
+            title = `Because you like ${parsed.liked_title || "Lumina"}`;
+        }
+
+        sessionStorage.setItem("browse_category_title", title);
+        sessionStorage.setItem("browse_category_items", JSON.stringify(items));
+        window.location.href = "browse.html";
+    };
+
+    if (seeAllGenre) {
+        seeAllGenre.onclick = (e) => {
+            e.preventDefault();
+            navigateToBrowse("Explore", `dashboard_data_${currentMediaMode}`);
+        };
+    }
+    if (seeAllInterest) {
+        seeAllInterest.onclick = (e) => {
+            e.preventDefault();
+            navigateToBrowse("Recommended", `dashboard_data_${currentMediaMode}`);
+        };
+    }
 }
 
 // 5. INITIALIZATION
 document.addEventListener("DOMContentLoaded", () => {
     setupNavigation();
     bindDashboardSearch();
+    bindMediaToggle();
+    syncMediaToggle(["all", "movie", "series"], currentMediaMode);
+    updateDashboardText(currentMediaMode);
     initFanCarouselNav();
     loadDailyRecommendations();
 });
 
 function buildSelectedContent(item) {
-    const pickNumericId = (...values) => {
-        for (const value of values) {
-            const str = String(value ?? "").trim();
-            if (/^\d+$/.test(str)) return str;
-        }
-        return null;
-    };
+    const normalized = normalizeItem(item || {});
+    const detailId = pickNumericId(
+        normalized?.tmdb_id,
+        normalized?.external_id,
+        normalized?.movie_id,
+        normalized?.id,
+        normalized?.content_id
+    );
 
     return {
-        ...item,
-        tmdb_id: pickNumericId(item?.tmdb_id, item?.movie_id, item?.id),
-        app_content_id: item?.content_id || null
+        ...normalized,
+        id: detailId || normalized?.id || normalized?.content_id || null,
+        tmdb_id: detailId,
+        app_content_id: normalized?.content_id || null
     };
 }
 
@@ -495,10 +797,11 @@ function renderGenreSections(data) {
     const extraWrapper = document.getElementById("genre-sections-extra");
 
     if (!sections.length) {
-        renderSection("container-genre", (data.genre_highlights || []).map(normalizeItem));
+        const genreItems = filterItemsByMode(data.genre_highlights || [], currentMediaMode);
+        renderSection("container-genre", genreItems);
         if (headerGenre && data.genre_name) {
             const cleanGenre = data.genre_name.charAt(0).toUpperCase() + data.genre_name.slice(1);
-            headerGenre.innerHTML = `Explore <span class="gold-accent">${cleanGenre}</span>`;
+            headerGenre.innerHTML = `Explore <span class="gold-accent">${cleanGenre}</span>${getModeHeadingSuffix()}`;
         }
         if (extraWrapper) extraWrapper.innerHTML = "";
         return;
@@ -507,66 +810,58 @@ function renderGenreSections(data) {
     const primarySection = sections[0] || {};
     const primaryName = primarySection.genre_name || data.genre_name || "Trending";
     if (headerGenre) {
-        headerGenre.innerHTML = `Explore <span class="gold-accent">${primaryName}</span>`;
+        headerGenre.innerHTML = `Explore <span class="gold-accent">${primaryName}</span>${getModeHeadingSuffix()}`;
     }
-    renderSection("container-genre", (primarySection.items || []).map(normalizeItem));
+    const primaryItems = filterItemsByMode(primarySection.items || [], currentMediaMode);
+    renderSection("container-genre", primaryItems);
 
     if (!extraWrapper) return;
     extraWrapper.innerHTML = "";
 
-    sections.slice(1).forEach((section) => {
+    sections.slice(1).forEach((section, idx) => {
         const title = section.genre_name || section.genre || "Genre Picks";
-        const sectionHeader = document.createElement("h1");
-        sectionHeader.innerHTML = `Explore <span class="gold-accent">${title}</span>`;
+        const sectionWrapper = document.createElement("div");
+        sectionWrapper.className = "genre-extra-section";
+        
+        const headerRow = document.createElement("div");
+        headerRow.className = "section-header-row";
+        headerRow.innerHTML = `
+            <h1>Explore <span class="gold-accent">${title}</span>${getModeHeadingSuffix()}</h1>
+            <a href="#" class="see-all-link">
+                See All <span class="see-all-arrow">&#10132;</span>
+            </a>
+        `;
+        headerRow.querySelector(".see-all-link").onclick = (e) => {
+            e.preventDefault();
+            sessionStorage.setItem("browse_category_title", title);
+            sessionStorage.setItem("browse_category_items", JSON.stringify(section.items || []));
+            window.location.href = "browse.html";
+        };
 
-        const sectionBox = document.createElement("div");
-        sectionBox.className = "box";
+        const carouselWrapper = document.createElement("div");
+        carouselWrapper.className = "row-carousel";
+        
+        const prevBtn = document.createElement("button");
+        prevBtn.className = "carousel-nav prev";
+        prevBtn.innerHTML = "&#10094;";
+        
+        const strip = document.createElement("div");
+        strip.className = "carousel-strip";
+        strip.id = `container-genre-extra-${idx}`;
+        
+        const nextBtn = document.createElement("button");
+        nextBtn.className = "carousel-nav next";
+        nextBtn.innerHTML = "&#10095;";
 
-        const items = (section.items || []).map(normalizeItem);
-        if (!items.length) {
-            sectionBox.innerHTML = '<p class="loading">No matches found for this category.</p>';
-        } else {
-            const tmdbBaseUrl = "https://image.tmdb.org/t/p/w500";
-            items.forEach((item) => {
-                const card = document.createElement("div");
-                card.className = "rec-card-stack";
-                const anchor = document.createElement("a");
-                anchor.href = "#";
-                anchor.className = "rec-link";
+        carouselWrapper.appendChild(prevBtn);
+        carouselWrapper.appendChild(strip);
+        carouselWrapper.appendChild(nextBtn);
 
-                const img = document.createElement("img");
-                const imagePath = item.poster_url || item.image || "";
-                img.src = imagePath
-                    ? (imagePath.startsWith("http") ? imagePath : `${tmdbBaseUrl}${imagePath}`)
-                    : "assests/LuminaLogo.png";
-                img.alt = item.title || "Content";
-                img.loading = "lazy";
+        sectionWrapper.appendChild(headerRow);
+        sectionWrapper.appendChild(carouselWrapper);
+        extraWrapper.appendChild(sectionWrapper);
 
-                anchor.appendChild(img);
-                anchor.addEventListener("click", (e) => {
-                    e.preventDefault();
-                    sessionStorage.setItem("selectedContent", JSON.stringify(normalizeItem(item)));
-                    window.location.href = "detail.html";
-                });
-
-                const wlBtn = document.createElement("button");
-                wlBtn.type = "button";
-                wlBtn.className = "watchlist-btn";
-                wlBtn.textContent = "+ Watchlist";
-                wlBtn.addEventListener("click", (e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    addItemToWatchlist(item);
-                });
-
-                card.appendChild(anchor);
-                card.appendChild(wlBtn);
-                sectionBox.appendChild(card);
-            });
-        }
-
-        extraWrapper.appendChild(sectionHeader);
-        extraWrapper.appendChild(sectionBox);
+        renderSection(strip, section.items || []);
     });
 }
 

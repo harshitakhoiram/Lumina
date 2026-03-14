@@ -10,8 +10,10 @@ function getQueryParam(name) {
     return (params.get(name) || "").trim();
 }
 
-function normalizeMovie(item) {
-    const tmdbId = item?.tmdb_id || item?.id || item?.movie_id || null;
+function normalizeSearchItem(item, providedMediaType = null) {
+    const mediaType = providedMediaType || (["tv", "series"].includes(String(item?.media_type || item?.content_type || "").toLowerCase()) ? "tv" : "movie");
+    const tmdbId = item?.tmdb_id || item?.id || item?.movie_id || item?.tv_id || null;
+    
     return {
         ...item,
         id: tmdbId,
@@ -21,9 +23,9 @@ function normalizeMovie(item) {
         poster_url: item?.poster_url || item?.image || item?.poster_path || "",
         rating: item?.rating ?? item?.vote_average ?? 0,
         vote_count: item?.vote_count ?? 0,
-        release_date: item?.release_date || "",
-        content_type: "movie",
-        media_type: "movie"
+        release_date: item?.release_date || item?.first_air_date || "",
+        media_type: mediaType,
+        content_type: mediaType === "tv" ? "series" : "movie"
     };
 }
 
@@ -34,7 +36,7 @@ function getPosterUrl(item) {
 }
 
 function getYear(item) {
-    const value = String(item?.release_date || "");
+    const value = String(item?.release_date || item?.first_air_date || "");
     return value.includes("-") ? value.split("-")[0] : (value || "-");
 }
 
@@ -44,14 +46,7 @@ function setSearchQueryInputValue(value) {
 }
 
 function saveSelectedContent(item) {
-    const payload = {
-        ...item,
-        tmdb_id: item?.tmdb_id || item?.id || null,
-        id: item?.tmdb_id || item?.id || null,
-        media_type: "movie",
-        content_type: "movie",
-        poster_url: item?.poster_url || item?.image || item?.poster_path || ""
-    };
+    const payload = normalizeSearchItem(item);
     sessionStorage.setItem("selectedContent", JSON.stringify(payload));
 }
 
@@ -69,7 +64,7 @@ function escapeHtml(value) {
         .replaceAll("'", "&#39;");
 }
 
-function createMovieCard(item, allowOpen = true) {
+function createSearchCard(item, allowOpen = true) {
     const card = document.createElement("article");
     card.className = "search-card";
 
@@ -77,10 +72,12 @@ function createMovieCard(item, allowOpen = true) {
     const title = item?.title || "Untitled";
     const rating = Number(item?.rating || 0);
     const year = getYear(item);
+    const label = item.media_type === "tv" ? "Series" : "Movie";
 
     card.innerHTML = `
         <div class="search-card-poster-wrap">
             <img class="search-card-poster" src="${posterUrl}" alt="${escapeHtml(title)} poster">
+            <span class="content-type-badge">${label}</span>
         </div>
         <div class="search-card-body">
             <h3 class="search-card-title">${escapeHtml(title)}</h3>
@@ -106,19 +103,20 @@ function createMovieCard(item, allowOpen = true) {
     return card;
 }
 
-function renderSpotlight(movie, searchedText) {
+function renderSpotlight(item, searchedText) {
     const container = document.getElementById("searchedMovieSpotlight");
     if (!container) return;
 
-    if (!movie) {
-        container.innerHTML = `<div class="search-empty-card">No movie found for "${escapeHtml(searchedText)}".</div>`;
+    if (!item) {
+        container.innerHTML = `<div class="search-empty-card">No results found for "${escapeHtml(searchedText)}".</div>`;
         return;
     }
 
-    const posterUrl = getPosterUrl(movie);
-    const title = movie.title || searchedText || "Search Result";
-    const year = getYear(movie);
-    const rating = Number(movie.rating || 0);
+    const posterUrl = getPosterUrl(item);
+    const title = item.title || searchedText || "Search Result";
+    const year = getYear(item);
+    const rating = Number(item.rating || 0);
+    const typeLabel = item.media_type === "tv" ? "Series" : "Movie";
 
     container.innerHTML = `
         <article class="search-spotlight-card">
@@ -126,6 +124,7 @@ function renderSpotlight(movie, searchedText) {
             <div class="search-spotlight-body">
                 <div class="search-spotlight-meta">
                     <span class="search-pill">Top match</span>
+                    <span>${typeLabel}</span>
                     <span>${escapeHtml(year)}</span>
                     <span>${rating ? `${rating.toFixed(1)}/10` : "-"}</span>
                 </div>
@@ -133,7 +132,7 @@ function renderSpotlight(movie, searchedText) {
                 <h1 class="search-spotlight-title">${escapeHtml(title)}</h1>
 
                 <p class="search-spotlight-overview">
-                    ${escapeHtml(movie.overview || "No overview available for this title yet.")}
+                    ${escapeHtml(item.overview || "No overview available for this title yet.")}
                 </p>
 
                 <div class="search-spotlight-actions">
@@ -154,7 +153,7 @@ function renderSpotlight(movie, searchedText) {
 
     const openBtn = document.getElementById("openSpotlightBtn");
     if (openBtn) {
-        openBtn.addEventListener("click", () => openDetailPage(movie));
+        openBtn.addEventListener("click", () => openDetailPage(item));
     }
 
     const researchBtn = document.getElementById("researchBtn");
@@ -166,10 +165,11 @@ function renderSpotlight(movie, searchedText) {
     }
 }
 
-function setSimilarTitle(text) {
+function setSimilarTitle(item, searchText) {
     const titleEl = document.getElementById("similarSectionTitle");
     if (!titleEl) return;
-    titleEl.textContent = `Movies similar to ${text || "your search"}`;
+    const type = item?.media_type === "tv" ? "Series" : "Movies";
+    titleEl.textContent = `${type} similar to ${item?.title || searchText || "your search"}`;
 }
 
 function renderGrid(items) {
@@ -179,7 +179,7 @@ function renderGrid(items) {
     grid.innerHTML = "";
 
     if (!items.length) {
-        grid.innerHTML = `<div class="search-empty-card">No similar movies found.</div>`;
+        grid.innerHTML = `<div class="search-empty-card">No similar results found.</div>`;
         return;
     }
 
@@ -192,7 +192,7 @@ function renderGrid(items) {
             return;
         }
 
-        grid.appendChild(createMovieCard(item, true));
+        grid.appendChild(createSearchCard(item, true));
     });
 }
 
@@ -209,9 +209,9 @@ function uniqueByTmdbId(items) {
     const output = [];
 
     for (const raw of items) {
-        const item = normalizeMovie(raw);
-        const key = String(item.tmdb_id || "");
-        if (!key || seen.has(key)) continue;
+        const item = normalizeSearchItem(raw);
+        const key = `${item.media_type}-${item.tmdb_id}`;
+        if (!item.tmdb_id || seen.has(key)) continue;
         seen.add(key);
         output.push(item);
     }
@@ -226,42 +226,64 @@ async function fetchJson(url) {
 }
 
 async function fetchSearchResults(query) {
-    const payload = await fetchJson(`${API_BASE}/discovery/movies/search?q=${encodeURIComponent(query)}`);
-    return Array.isArray(payload) ? payload.map(normalizeMovie) : [];
+    const [movies, series] = await Promise.all([
+        fetchJson(`${API_BASE}/discovery/movies/search?q=${encodeURIComponent(query)}`),
+        fetchJson(`${API_BASE}/discovery/series/search?q=${encodeURIComponent(query)}`)
+    ]);
+
+    const results = [
+        ...movies.map(m => normalizeSearchItem(m, "movie")),
+        ...series.map(s => normalizeSearchItem(s, "tv"))
+    ];
+
+    // Simple relevance check: exact title match first
+    results.sort((a, b) => {
+        const q = query.toLowerCase();
+        const aTitle = a.title.toLowerCase();
+        const bTitle = b.title.toLowerCase();
+        if (aTitle === q && bTitle !== q) return -1;
+        if (bTitle === q && aTitle !== q) return 1;
+        return (b.rating || 0) - (a.rating || 0);
+    });
+
+    return results;
 }
 
-async function fetchSimilarMovies(movieId) {
-    const payload = await fetchJson(`${API_BASE}/discovery/movies/similar/${encodeURIComponent(movieId)}`);
-    return Array.isArray(payload) ? payload.map(normalizeMovie) : [];
-}
+async function fetchSimilarItems(item) {
+    if (!item?.tmdb_id) return [];
+    
+    const endpoint = item.media_type === "tv"
+        ? `${API_BASE}/discovery/series/similar/${encodeURIComponent(item.tmdb_id)}`
+        : `${API_BASE}/discovery/movies/similar/${encodeURIComponent(item.tmdb_id)}`;
 
-async function fetchTrendingMovies() {
-    const payload = await fetchJson(`${API_BASE}/discovery/movies/trending`);
-    return Array.isArray(payload) ? payload.map(normalizeMovie) : [];
-}
-
-async function buildSimilarGrid(topMovie, searchResults) {
-    let similar = [];
-
-    if (topMovie?.tmdb_id) {
-        try {
-            similar = await fetchSimilarMovies(topMovie.tmdb_id);
-        } catch (_error) {
-            similar = [];
-        }
+    try {
+        const payload = await fetchJson(endpoint);
+        return Array.isArray(payload) ? payload.map(r => normalizeSearchItem(r, item.media_type)) : [];
+    } catch (_error) {
+        return [];
     }
+}
+
+async function fetchTrendingFallback(mediaType = "movie") {
+    const path = mediaType === "tv" ? "series" : "movies";
+    const payload = await fetchJson(`${API_BASE}/discovery/${path}/trending`);
+    return Array.isArray(payload) ? payload.map(r => normalizeSearchItem(r, mediaType)) : [];
+}
+
+async function buildSimilarGrid(topItem, searchResults) {
+    let similar = await fetchSimilarItems(topItem);
 
     let merged = uniqueByTmdbId([
         ...similar,
-        ...searchResults.filter((item) => String(item.tmdb_id) !== String(topMovie?.tmdb_id || ""))
+        ...searchResults.filter((item) => String(item.tmdb_id) !== String(topItem?.tmdb_id || ""))
     ]);
 
     if (merged.length < MIN_SIMILAR_TILES) {
         try {
-            const trending = await fetchTrendingMovies();
+            const trending = await fetchTrendingFallback(topItem?.media_type || "movie");
             merged = uniqueByTmdbId([
                 ...merged,
-                ...trending.filter((item) => String(item.tmdb_id) !== String(topMovie?.tmdb_id || ""))
+                ...trending.filter((item) => String(item.tmdb_id) !== String(topItem?.tmdb_id || ""))
             ]);
         } catch (_error) {
             // no-op
@@ -279,43 +301,6 @@ function readSelectedSearchContent() {
     } catch {
         return null;
     }
-}
-
-function normalizeSelectedItem(item) {
-    if (!item) return null;
-
-    const mediaType = ["tv", "series"].includes(String(item?.media_type || item?.content_type || "").toLowerCase())
-        ? "tv"
-        : "movie";
-
-    return {
-        ...item,
-        id: item?.tmdb_id || item?.id || item?.movie_id || item?.tv_id || null,
-        tmdb_id: item?.tmdb_id || item?.id || item?.movie_id || item?.tv_id || null,
-        title: item?.title || item?.name || "Untitled",
-        poster_url: item?.poster_url || item?.image || item?.poster_path || "",
-        media_type: mediaType,
-        content_type: mediaType === "tv" ? "series" : "movie",
-        rating: item?.rating ?? item?.vote_average ?? 0,
-        release_date: item?.release_date || item?.first_air_date || ""
-    };
-}
-
-async function fetchSimilarForSelected(item) {
-    if (!item?.tmdb_id) return [];
-
-    const endpoint = item.media_type === "tv"
-        ? `${API_BASE}/discovery/series/similar/${encodeURIComponent(item.tmdb_id)}`
-        : `${API_BASE}/discovery/movies/similar/${encodeURIComponent(item.tmdb_id)}`;
-
-    const payload = await fetchJson(endpoint);
-    return Array.isArray(payload)
-        ? payload.map((raw) => ({
-            ...normalizeMovie(raw),
-            media_type: item.media_type,
-            content_type: item.media_type === "tv" ? "series" : "movie"
-        }))
-        : [];
 }
 
 function bindSearchPageForm() {
@@ -341,7 +326,7 @@ function bindSearchPageForm() {
             formId: "searchPageSearchForm",
             dropdownId: "searchPageSuggestions",
             onSelect: (item) => {
-                sessionStorage.setItem("selectedSearchContent", JSON.stringify(normalizeSelectedItem(item)));
+                sessionStorage.setItem("selectedSearchContent", JSON.stringify(normalizeSearchItem(item)));
                 sessionStorage.setItem("lastSearchQuery", item.title || "");
                 window.location.href = `search.html?q=${encodeURIComponent(item.title || "")}`;
             }
@@ -353,7 +338,7 @@ async function runSearch(query) {
     const cleanedQuery = String(query || "").trim();
     setSearchQueryInputValue(cleanedQuery);
 
-    const selected = normalizeSelectedItem(readSelectedSearchContent());
+    const selected = normalizeSearchItem(readSelectedSearchContent());
     const selectedMatchesQuery =
         selected &&
         cleanedQuery &&
@@ -368,19 +353,23 @@ async function runSearch(query) {
     try {
         let topItem = null;
         let similarItems = [];
+        let results = [];
 
         if (selectedMatchesQuery) {
             topItem = selected;
-            similarItems = await fetchSimilarForSelected(topItem);
+            results = [topItem]; // Still might need search results from elsewhere for padding?
         } else {
-            const searchResults = await fetchSearchResults(cleanedQuery);
-            topItem = searchResults[0] || null;
-            similarItems = topItem ? await buildSimilarGrid(topItem, searchResults) : [];
+            results = await fetchSearchResults(cleanedQuery);
+            topItem = results[0] || null;
+        }
+
+        if (topItem) {
+            similarItems = await buildSimilarGrid(topItem, results);
         }
 
         renderSpotlight(topItem, cleanedQuery);
-        setSimilarTitle(topItem?.title || cleanedQuery);
-        renderGrid(padToFourteen(similarItems));
+        setSimilarTitle(topItem, cleanedQuery);
+        renderGrid(similarItems);
     } catch (error) {
         console.error("Search page error:", error);
         renderSpotlight(null, cleanedQuery);

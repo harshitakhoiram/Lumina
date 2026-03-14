@@ -8,11 +8,66 @@ function normalizeType(value) {
     return t;
 }
 
+function pickNumericId(...values) {
+    for (const value of values) {
+        let raw = String(value ?? "").trim();
+        if (raw.startsWith("tmdb-")) {
+            raw = raw.replace("tmdb-", "");
+        }
+        if (/^\d+$/.test(raw)) return raw;
+    }
+    return null;
+}
+
+function resolveDetailId(item) {
+    return pickNumericId(
+        item?.tmdb_id,
+        item?.external_id,
+        item?.movie_id,
+        item?.id,
+        item?.content_id
+    );
+}
+
+async function resolveDetailIdFromTitle(item) {
+    const type = normalizeType(item?.content_type);
+    if (type !== "movie" && type !== "series") return null;
+
+    const title = String(item?.title || item?.name || "").trim();
+    if (!title) return null;
+
+    const endpoint = type === "series" ? "/discovery/series/search" : "/discovery/movies/search";
+    const searchUrl = `${API_BASE}${endpoint}?q=${encodeURIComponent(title)}`;
+
+    try {
+        const response = await fetch(searchUrl);
+        if (!response.ok) return null;
+        const results = await response.json();
+        if (!Array.isArray(results) || !results.length) return null;
+
+        for (const candidate of results) {
+            const candidateId = pickNumericId(
+                candidate?.tmdb_id,
+                candidate?.external_id,
+                candidate?.id,
+                candidate?.movie_id
+            );
+            if (candidateId) return candidateId;
+        }
+    } catch (_error) {
+        return null;
+    }
+
+    return null;
+}
+
 function normalizeItem(item) {
     const type = normalizeType(item.content_type);
-    const id = item.tmdb_id || item.external_id || item.id || item.movie_id || item.content_id || null;
+    const detailId = resolveDetailId(item);
+    const id = detailId || item.id || item.content_id || null;
     return {
         ...item,
+        tmdb_id: detailId || item.tmdb_id || item.external_id || null,
         id,
         content_type: type
     };
@@ -118,28 +173,66 @@ function renderCastTable(cast) {
 }
 
 async function fetchContentDetails(item) {
-    const type = normalizeType(item.content_type);
-    const id = item.id;
+    const originalType = normalizeType(item.content_type);
+    let id = originalType === "book" ? (item.id || item.content_id) : resolveDetailId(item);
+
+    if ((originalType === "movie" || originalType === "series") && !id) {
+        id = await resolveDetailIdFromTitle(item);
+    }
 
     if (!id) {
         throw new Error("Missing content id");
     }
 
-    let detailUrl = `${API_BASE}/discovery/movie/${id}`;
-    if (type === "series") detailUrl = `${API_BASE}/discovery/series/${id}`;
-    if (type === "book") detailUrl = `${API_BASE}/discovery/book/${id}`;
+    const tryFetch = async (type, detailId) => {
+        let url = `${API_BASE}/discovery/movie/${detailId}`;
+        if (type === "series") url = `${API_BASE}/discovery/series/${detailId}`;
+        if (type === "book") url = `${API_BASE}/discovery/book/${detailId}`;
+        
+        const response = await fetch(url);
+        if (response.ok) return await response.json();
+        return null;
+    };
 
-    const response = await fetch(detailUrl);
-    if (!response.ok) {
-        throw new Error(`Failed detail fetch: ${response.status}`);
+    // 1. Try original type
+    let data = await tryFetch(originalType, id);
+    if (data) return data;
+
+    // 2. If 404 and it's Movie/Series, try the other one
+    if (originalType === "movie" || originalType === "series") {
+        const otherType = originalType === "movie" ? "series" : "movie";
+        console.log(`original type ${originalType} failed, trying ${otherType}...`);
+        data = await tryFetch(otherType, id);
+        if (data) {
+            // Update item type in memory so following calls (like similar) use it
+            item.content_type = otherType;
+            return data;
+        }
     }
 
-    return response.json();
+    // 3. Last stand: search by title again if we're still empty
+    const fallbackId = await resolveDetailIdFromTitle(item);
+    if (fallbackId && String(fallbackId) !== String(id)) {
+        data = await tryFetch(originalType, fallbackId);
+        if (data) return data;
+        
+        const otherType = originalType === "movie" ? "series" : "movie";
+        data = await tryFetch(otherType, fallbackId);
+        if (data) {
+            item.content_type = otherType;
+            return data;
+        }
+    }
+
+    throw new Error(`Failed to fetch details for ${item.title || id}`);
 }
 
 async function fetchSimilar(item) {
     const type = normalizeType(item.content_type);
-    const id = item.id;
+    let id = type === "book" ? (item.id || item.content_id) : resolveDetailId(item);
+    if (!id && (type === "movie" || type === "series")) {
+        id = await resolveDetailIdFromTitle(item);
+    }
     if (!id) return [];
 
     let similarUrl = `${API_BASE}/discovery/movies/similar/${id}`;
@@ -153,7 +246,56 @@ async function fetchSimilar(item) {
     return Array.isArray(payload) ? payload : (payload.items || []);
 }
 
+// Search Autocomplete Logic
+function buildSearchSelection(item) {
+    const mediaType = String(item?.media_type || item?.content_type || "").toLowerCase() === "tv" ||
+        String(item?.content_type || "").toLowerCase() === "series"
+        ? "tv"
+        : "movie";
+
+    return {
+        ...item,
+        id: item?.tmdb_id || item?.id || null,
+        tmdb_id: item?.tmdb_id || item?.id || null,
+        title: item?.title || item?.name || "Untitled",
+        poster_url: item?.poster_url || item?.image || item?.poster_path || "",
+        media_type: mediaType,
+        content_type: mediaType === "tv" ? "series" : "movie",
+        release_date: item?.release_date || item?.first_air_date || ""
+    };
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
+    // 1. Initialize Global Navigation Search
+    const searchForm = document.getElementById("dashboardSearchForm");
+    const searchInput = document.getElementById("navbar-query");
+
+    if (searchForm && searchInput) {
+        searchForm.addEventListener("submit", (e) => {
+            e.preventDefault();
+            const query = searchInput.value.trim();
+            if (query) {
+                sessionStorage.removeItem("selectedSearchContent");
+                sessionStorage.setItem("lastSearchQuery", query);
+                window.location.href = `search.html?q=${encodeURIComponent(query)}`;
+            }
+        });
+
+        if (typeof window.initSearchAutocomplete === "function") {
+            window.initSearchAutocomplete({
+                inputId: "navbar-query",
+                formId: "dashboardSearchForm",
+                dropdownId: "dashboardSearchSuggestions",
+                onSelect: (item) => {
+                    const selected = buildSearchSelection(item);
+                    sessionStorage.setItem("selectedSearchContent", JSON.stringify(selected));
+                    sessionStorage.setItem("lastSearchQuery", selected.title);
+                    window.location.href = `search.html?q=${encodeURIComponent(selected.title)}`;
+                }
+            });
+        }
+    }
+
     const rawData = sessionStorage.getItem("selectedContent");
     if (!rawData) {
         setText("dynTitle", "No content selected");
@@ -218,6 +360,18 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     try {
         const full = await fetchContentDetails(selected);
+
+        const resolvedId = pickNumericId(
+            full?._resolved_id,
+            full?.id,
+            full?.tmdb_id,
+            selected?.tmdb_id,
+            selected?.id
+        );
+        if (resolvedId) {
+            selected.id = resolvedId;
+            selected.tmdb_id = resolvedId;
+        }
 
         setText("dynTitle", full.title || selected.title || "Untitled");
         setText("dynRating", full.rating || selected.rating || "-");

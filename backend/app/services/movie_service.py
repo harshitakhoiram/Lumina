@@ -36,7 +36,15 @@ class MovieService:
         data = await self._make_request(url)
         return self._format_movie_data(data.get("results", [])) if data else []
 
-    async def get_trending_movies_by_language(self, lang: str = "en", limit: int = 12):
+    async def get_trending_series(self):
+        url = f"{self.base_url}/trending/tv/day"
+        data = await self._make_request(url)
+        results = data.get("results", []) if data else []
+        # Filter out Reality (10764) and Talk (10767)
+        filtered = [m for m in results if 10764 not in (m.get("genre_ids") or []) and 10767 not in (m.get("genre_ids") or [])]
+        return self._format_movie_data(filtered, "series")
+
+    async def get_trending_movies_by_language(self, lang: str = "en", limit: int = 12, seed_key: str | None = None):
         """Returns actual trending/day items filtered by original language.
         If not enough results are available for that language, backfill from discover.
         """
@@ -49,32 +57,119 @@ class MovieService:
         lang_filtered = [m for m in results if m.get("original_language") == lang]
         formatted = self._format_movie_data(lang_filtered[:limit], "movie")
 
-        if len(formatted) >= limit:
+        # ALWAYS mix in discovery results to ensure NEW content on refresh, 
+        # even if trending list is static.
+        page = 1
+        if seed_key:
+            rotate_key = f"{seed_key}:{lang}:{date.today().isoformat()}:movie-trending"
+            digest = hashlib.sha256(rotate_key.encode("utf-8")).hexdigest()
+            # Wider pool of pages for discovery (up to 40)
+            page = (int(digest[:8], 16) % 40) + 1
+
+        discover_url = f"{self.base_url}/discover/movie"
+        discover_data = await self._make_request(discover_url, params={
+            "with_original_language": lang,
+            "sort_by": "popularity.desc",
+            "vote_count.gte": 25, # Lowered for more variety
+            "page": page,
+        })
+
+        if not discover_data:
             return formatted
 
-        # Backfill when TMDB trending/day has too few entries for a language.
-        discover_url = f"{self.base_url}/discover/movie"
+        discover_results = self._format_movie_data(discover_data.get("results", []), "movie")
+        
+        # Interleave trending and discovery for maximum perceived variety
+        mixed = []
+        seen_ids = {str(m.get("id")) for m in formatted if m.get("id")}
+        
+        # Take up to half from trending, rest from discovery
+        trending_quota = formatted[:limit//2]
+        mixed.extend(trending_quota)
+        
+        for m in discover_results:
+            m_id = str(m.get("id") or "")
+            if m_id and m_id not in seen_ids:
+                mixed.append(m)
+                seen_ids.add(m_id)
+            if len(mixed) >= limit:
+                break
+        
+        # Final backfill from trending if discovery was thin
+        if len(mixed) < limit:
+            for m in formatted:
+                m_id = str(m.get("id") or "")
+                if m_id not in seen_ids:
+                    mixed.append(m)
+                    seen_ids.add(m_id)
+                if len(mixed) >= limit:
+                    break
+
+        return mixed
+
+    async def get_trending_series_by_language(self, lang: str = "en", limit: int = 12, seed_key: str | None = None):
+        """Returns trending TV items filtered by original language with discover backfill."""
+        trending_url = f"{self.base_url}/trending/tv/day"
+        trending_data = await self._make_request(trending_url)
+        if not trending_data:
+            return []
+
+        results = trending_data.get("results", [])
+        # Filter by language and exclude Reality/Talk
+        lang_filtered = [
+            m for m in results 
+            if m.get("original_language") == lang 
+            and 10764 not in (m.get("genre_ids") or []) 
+            and 10767 not in (m.get("genre_ids") or [])
+        ]
+        formatted = self._format_movie_data(lang_filtered[:limit], "series")
+
+        # ALWAYS mix in discovery results
+        page = 1
+        if seed_key:
+            rotate_key = f"{seed_key}:{lang}:{date.today().isoformat()}:series-trending"
+            digest = hashlib.sha256(rotate_key.encode("utf-8")).hexdigest()
+            page = (int(digest[:8], 16) % 40) + 1
+
+        discover_url = f"{self.base_url}/discover/tv"
         params = {
             "with_original_language": lang,
             "sort_by": "popularity.desc",
-            "vote_count.gte": 50,
-            "page": 1,
+            "vote_count.gte": 10, # Lower floor for series variety
+            "page": page,
+            "without_genres": "10764,10767" 
         }
         discover_data = await self._make_request(discover_url, params=params)
         if not discover_data:
             return formatted
 
+        discover_results = self._format_movie_data(discover_data.get("results", []), "series")
+        
+        mixed = []
         seen_ids = {str(m.get("id")) for m in formatted if m.get("id")}
-        for m in self._format_movie_data(discover_data.get("results", []), "movie"):
-            m_id = str(m.get("id") or "")
-            if not m_id or m_id in seen_ids:
-                continue
-            seen_ids.add(m_id)
-            formatted.append(m)
-            if len(formatted) >= limit:
+        
+        # Interleave
+        trending_quota = formatted[:limit//2]
+        mixed.extend(trending_quota)
+        
+        for item in discover_results:
+            item_id = str(item.get("id") or "")
+            if item_id and item_id not in seen_ids:
+                mixed.append(item)
+                seen_ids.add(item_id)
+            if len(mixed) >= limit:
                 break
+        
+        if len(mixed) < limit:
+            for item in formatted:
+                item_id = str(item.get("id") or "")
+                if item_id not in seen_ids:
+                    mixed.append(item)
+                    seen_ids.add(item_id)
+                if len(mixed) >= limit:
+                    break
 
-        return formatted
+        return mixed
 
     async def search_movies(self, query: str, original_language: str | None = None):
         url = f"{self.base_url}/search/movie"
@@ -96,13 +191,15 @@ class MovieService:
             results = [m for m in results if m.get("original_language") == original_language]
         return self._format_movie_data(results, "series")
 
-    async def search_by_genre_lang(
+    async def _discover_by_genre_lang(
         self,
+        endpoint: str,
         genre: str,
         lang: str = "en",
         limit: int = 12,
         exclude_ids: set[str] | None = None,
         seed_key: str | None = None,
+        content_type: str = "movie",
     ):
         genre_map = {
             "action": 28, "drama": 18, "comedy": 35,
@@ -111,36 +208,66 @@ class MovieService:
         }
 
         input_genres = [g.strip().lower() for g in genre.split(',') if g.strip()]
-        genre_ids = [str(genre_map.get(ig)) for ig in input_genres if genre_map.get(ig)]
+        
+        # TV-specific genre mapping as TMDB doesn't have a 1:1 'Romance' for TV
+        if content_type == "series":
+            tv_genre_map = {
+                "action": 10759, # Action & Adventure
+                "drama": 18,
+                "comedy": 35,
+                "sci-fi": 10765, # Sci-Fi & Fantasy
+                "mystery": 9648,
+                "fantasy": 10765,
+                "romance": 10749, # TMDB TV genre is 10749 (Romance).
+                "horror": 27,
+                "animation": 16,
+                "thriller": 80, # Thriller/Crime
+                "documentary": 99,
+                "war": 10768, # War & Politics
+                "crime": 80
+            }
+            genre_ids = [str(tv_genre_map.get(ig)) for ig in input_genres if tv_genre_map.get(ig)]
+        else:
+            genre_map = {
+                "action": 28, "drama": 18, "comedy": 35,
+                "sci-fi": 878, "mystery": 9648, "fantasy": 14,
+                "romance": 10749, "horror": 27, "animation": 16
+            }
+            genre_ids = [str(genre_map.get(ig)) for ig in input_genres if genre_map.get(ig)]
+
         if not genre_ids:
             return []
 
         excluded = {str(i) for i in (exclude_ids or set()) if str(i).strip()}
-        vote_floor = 25 if lang.lower() != "en" else 80
-        url = f"{self.base_url}/discover/movie"
+        if lang.lower() == "en":
+            vote_floor = 80
+        elif lang.lower() in ["ko", "zh"]:
+            vote_floor = 10  # More inclusive for recent/popular Asian dramas
+        else:
+            vote_floor = 25
+        url = f"{self.base_url}/{endpoint}"
 
-        # Rotate pages deterministically per day + key so users don't see the same first-page bucket.
-        rotate_key = f"{seed_key or genre}:{lang}:{date.today().isoformat()}"
+        rotate_key = f"{seed_key or genre}:{lang}:{date.today().isoformat()}:{content_type}"
         digest = hashlib.sha256(rotate_key.encode("utf-8")).hexdigest()
-        start_page = (int(digest[:6], 16) % 20) + 1
+        # Much larger page pool (up to 60 pages) for deep discovery variety
+        start_page = (int(digest[:8], 16) % 60) + 1
 
+        release_sort = "primary_release_date.desc" if content_type == "movie" else "first_air_date.desc"
+        title_key = "title" if content_type == "movie" else "name"
         sort_options = [
             "popularity.desc",
-            "primary_release_date.desc",
+            release_sort,
             "vote_average.desc",
         ]
 
         collected = []
         seen_ids = set(excluded)
 
-        # Query each selected genre separately and merge to get OR-like behavior.
-        # TMDB treats comma-separated with_genres as strict matching, which can
-        # easily return empty sets for multi-genre onboarding selections.
+        # Exclude Reality (10764) and Talk (10767) to avoid 'Knowing Bros' etc.
+        without_genres = "10764,10767" if content_type == "series" else ""
+
         for genre_id in genre_ids:
             for sort_by in sort_options:
-                # First, probe page 1 to find total_pages for this query,
-                # then rotate within the valid range to avoid empty-page errors
-                # for smaller language pools (e.g. Malayalam only has 2-5 pages).
                 probe_params = {
                     "with_genres": genre_id,
                     "with_original_language": lang,
@@ -148,6 +275,7 @@ class MovieService:
                     "sort_by": sort_by,
                     "page": 1,
                     "vote_count.gte": vote_floor,
+                    "without_genres": without_genres, # Exclude Reality/Talk
                 }
                 probe = await self._make_request(url, params=probe_params)
                 total_pages = max(1, min((probe or {}).get("total_pages", 1), 500))
@@ -156,7 +284,6 @@ class MovieService:
                 for offset in range(0, min(4, total_pages)):
                     page = ((clamped_start - 1 + offset) % total_pages) + 1
                     if page == 1 and offset == 0:
-                        # reuse probe data
                         data = probe
                     else:
                         params = {
@@ -166,33 +293,72 @@ class MovieService:
                             "sort_by": sort_by,
                             "page": page,
                             "vote_count.gte": vote_floor,
+                            "without_genres": without_genres,
                         }
                         data = await self._make_request(url, params=params)
                     if not data:
                         continue
 
-                    for m in data.get("results", []):
-                        if not m.get("poster_path"):
+                    for item in data.get("results", []):
+                        if not item.get("poster_path"):
                             continue
 
-                        m_id = str(m.get("id") or "")
-                        if not m_id or m_id in seen_ids:
+                        item_id = str(item.get("id") or "")
+                        if not item_id or item_id in seen_ids:
                             continue
 
-                        seen_ids.add(m_id)
+                        seen_ids.add(item_id)
                         collected.append(
                             {
-                                "id": m.get("id"),
-                                "title": m.get("title"),
-                                "image": f"https://image.tmdb.org/t/p/w500{m.get('poster_path')}",
-                                "rating": round(m.get("vote_average", 0), 1),
-                                "content_type": "movie",
+                                "id": item.get("id"),
+                                "title": item.get(title_key) or item.get("title") or item.get("name"),
+                                "image": f"https://image.tmdb.org/t/p/w500{item.get('poster_path')}",
+                                "rating": round(item.get("vote_average", 0), 1),
+                                "overview": item.get("overview"),
+                                "content_type": content_type,
+                                "original_language": item.get("original_language"),
                             }
                         )
                         if len(collected) >= limit:
                             return collected
 
         return collected
+
+    async def search_by_genre_lang(
+        self,
+        genre: str,
+        lang: str = "en",
+        limit: int = 12,
+        exclude_ids: set[str] | None = None,
+        seed_key: str | None = None,
+    ):
+        return await self._discover_by_genre_lang(
+            endpoint="discover/movie",
+            genre=genre,
+            lang=lang,
+            limit=limit,
+            exclude_ids=exclude_ids,
+            seed_key=seed_key,
+            content_type="movie",
+        )
+
+    async def search_series_by_genre_lang(
+        self,
+        genre: str,
+        lang: str = "en",
+        limit: int = 12,
+        exclude_ids: set[str] | None = None,
+        seed_key: str | None = None,
+    ):
+        return await self._discover_by_genre_lang(
+            endpoint="discover/tv",
+            genre=genre,
+            lang=lang,
+            limit=limit,
+            exclude_ids=exclude_ids,
+            seed_key=seed_key,
+            content_type="series",
+        )
 
     async def get_popular_people_by_genre(self, genre: str, lang: str = "en"):
         """Fetches famous actors associated with the given genres."""
@@ -371,7 +537,8 @@ class MovieService:
                 "overview": m.get("overview"),
                 "release_date": m.get("release_date") or m.get("first_air_date"), # TV shows use 'first_air_date'
                 "content_type": content_type or ("movie" if "title" in m else "series"),
-                "original_language": m.get("original_language")
+                "original_language": m.get("original_language"),
+                "genre_ids": m.get("genre_ids") or []
             }
             for m in results if m.get("poster_path")
         ]
