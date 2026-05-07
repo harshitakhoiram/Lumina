@@ -250,7 +250,8 @@ def _title_key(item: dict) -> str:
 
 
 def _item_language(item: dict) -> str:
-    return str(item.get("language") or item.get("original_language") or "").strip().lower()
+    row = _row_to_dict(item)
+    return str(row.get("language") or row.get("original_language") or "").strip().lower()
 
 
 def _keep_language(items: list[dict], lang: str):
