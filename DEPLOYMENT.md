@@ -84,7 +84,20 @@ Access the API at `http://localhost:8000`
 python -c "import secrets; print(secrets.token_urlsafe(32))"
 ```
 
-## Option 3: Deploy to Railway
+## Option 3: Deploy to Supabase
+
+Supabase is a good drop-in PostgreSQL replacement for this app.
+
+1. Create a new project in Supabase.
+2. Open the database connection details and copy the PostgreSQL connection string.
+3. Set `DATABASE_URL` in your backend environment to that value.
+4. Make sure the string includes SSL, either through `?sslmode=require` or the Supabase-provided settings.
+5. Recreate the schema by running `backend/schema.sql` against the new database.
+6. Re-run your ingest scripts so the new database has the content you need.
+
+If Supabase gives you both a direct connection and a pooler connection, start with the direct one for simplicity.
+
+## Option 4: Deploy to Railway
 
 1. Go to [railway.app](https://railway.app)
 2. Create new project
