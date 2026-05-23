@@ -2,30 +2,20 @@
     box-sizing: border-box;
 }
 
-html, body {
-    width: 100%;
-    overflow-x: hidden;
-}
-
 img, video, iframe {
     max-width: 100%;
     height: auto;
 }
 
-.container,
-.page-container,
-.dashboard-container,
-.profile-container,
-.footer-container,
-.nav-container {
-    width: min(1200px, calc(100% - 32px));
-    margin: 0 auto;
+html, body {
+    width: 100%;
+    overflow-x: hidden;
 }
 
 input,
-select,
+button,
 textarea,
-button {
+select {
     max-width: 100%;
 }
 
@@ -40,6 +30,22 @@ button {
 }
 
 @media (max-width: 768px) {
+    .searchbar {
+        height: 38px;
+    }
+
+    .ad-banner {
+        grid-template-columns: 1fr;
+    }
+
+    .release-card {
+        min-height: 180px;
+    }
+
+    .release-poster {
+        width: 100%;
+    }
+
     .cards-grid,
     .recommendation-grid,
     .content-grid,
@@ -88,5 +94,15 @@ button {
     .profile-card,
     .content-card {
         padding: 14px !important;
+    }
+
+    .movie-card,
+    .release-card {
+        border-radius: 20px;
+    }
+
+    .watchlist-section {
+        padding-left: 10px;
+        padding-right: 10px;
     }
 }
