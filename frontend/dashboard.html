@@ -45,10 +45,18 @@
           <button type="submit" class="search-submit-btn">Search</button>
           <div id="dashboardSearchSuggestions" class="search-suggestions" hidden></div>
         </form>
+        <p class="media-toggle-copy" id="dashboardAccessNote">Search without signing in. Log in to personalize your feed and watchlist.</p>
       </div>
 
       <div class="user-section">
-        <div class="account-menu" id="accountMenu">
+        <a href="login.html" class="account-trigger account-signin-link" id="guestSignInLink">
+          <span class="account-text">Sign In</span>
+          <div class="profile-circle" aria-hidden="true">
+            <span>+</span>
+          </div>
+        </a>
+
+        <div class="account-menu" id="accountMenu" hidden>
           <button type="button" class="account-trigger" id="accountTrigger" aria-expanded="false" aria-haspopup="true">
             <span class="account-text">My Account</span>
             <div class="profile-circle" id="profileBtn">

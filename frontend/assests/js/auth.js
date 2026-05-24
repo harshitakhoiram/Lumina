@@ -58,7 +58,69 @@ document.addEventListener("DOMContentLoaded", () => {
             window.location.href = 'login.html';
         });
     }
+
+    loadLandingPosters().catch((error) => {
+        console.error("Unable to load landing posters:", error);
+    });
 });
+
+function buildApiUrl(path, params = {}) {
+    const apiBase = window.API_BASE_URL || "http://127.0.0.1:8000";
+    const query = new URLSearchParams();
+
+    Object.entries(params).forEach(([key, value]) => {
+        if (value === undefined || value === null || value === "") return;
+        query.set(key, String(value));
+    });
+
+    return `${apiBase}${path}${query.size ? `?${query.toString()}` : ""}`;
+}
+
+function proxyImage(url) {
+    const raw = String(url || "").trim();
+    if (!raw) return "assests/LuminaLogo.png";
+    if (raw.startsWith("data:") || raw.startsWith("blob:") || raw.startsWith("assests/")) return raw;
+    if (raw.startsWith("http://") || raw.startsWith("https://")) {
+        return buildApiUrl("/discovery/image-proxy", { url: raw });
+    }
+    return raw;
+}
+
+function renderPosterSlot(element, item, fallbackLabel) {
+    if (!element) return;
+
+    const posterUrl = proxyImage(item?.poster_url || item?.poster_path || item?.image || "");
+    element.innerHTML = "";
+    element.style.backgroundImage = `url('${posterUrl}')`;
+    element.style.backgroundSize = "cover";
+    element.style.backgroundPosition = "center";
+    element.style.backgroundRepeat = "no-repeat";
+    element.setAttribute("aria-label", fallbackLabel || item?.title || "Featured poster");
+    element.setAttribute("role", "img");
+}
+
+async function loadLandingPosters() {
+    const response = await fetch(buildApiUrl("/discovery/movies/trending"));
+    if (!response.ok) {
+        throw new Error(`Failed to fetch landing posters (${response.status})`);
+    }
+
+    const items = await response.json();
+    const movies = Array.isArray(items) ? items.filter(Boolean) : [];
+    if (!movies.length) return;
+
+    renderPosterSlot(document.getElementById("movieOfDayPoster"), movies[0], "Movie of the day poster");
+
+    const releaseSlots = [
+        document.getElementById("newReleasePoster1"),
+        document.getElementById("newReleasePoster2"),
+        document.getElementById("newReleasePoster3"),
+    ];
+
+    releaseSlots.forEach((slot, index) => {
+        renderPosterSlot(slot, movies[index + 1] || movies[index] || movies[0], `New release poster ${index + 1}`);
+    });
+}
 
 // --- 4. VALIDATION FUNCTIONS ---
 function validateEmailField(inputClass, messageClass) {

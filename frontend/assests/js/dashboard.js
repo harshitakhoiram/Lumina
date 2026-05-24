@@ -3,11 +3,9 @@ const API_BASE_URL = window.API_BASE_URL || "http://localhost:8000";
 const currentToken = localStorage.getItem("access_token");
 const userId = localStorage.getItem("user_id");
 const DASHBOARD_MEDIA_MODE_KEY = "dashboard_media_mode";
+const isAuthenticated = Boolean(currentToken);
 
-// 1. GLOBAL STATE & AUTH CHECK
-if (!currentToken) {
-    window.location.href = "index.html";
-}
+// 1. GLOBAL STATE & AUTH STATE
 
 let heroIndex = 0;
 let heroData = [];
@@ -23,6 +21,49 @@ function normalizeMediaMode(value) {
 
 function normalizeContentType(value) {
     return String(value || "movie").toLowerCase();
+}
+
+function getAuthHeaders() {
+    return currentToken ? { Authorization: `Bearer ${currentToken}` } : {};
+}
+
+function createPublicDashboardData(items = [], mediaMode = currentMediaMode) {
+    const normalizedItems = items.map(normalizeItem);
+    const heroItems = normalizedItems.slice(0, 8);
+    const gridItems = normalizedItems.slice(0, 12);
+
+    return {
+        media_mode: mediaMode,
+        available_media_modes: ["all", "movie", "series"],
+        slider: heroItems,
+        genre_name: "Trending",
+        genre_highlights: gridItems,
+        genre_sections: [{ genre_name: "Trending now", items: gridItems }],
+        interest_trending: gridItems,
+        global_top: gridItems,
+        liked_title: "",
+        book_recommendation: null
+    };
+}
+
+function updateAccessState() {
+    const guestSignInLink = document.getElementById("guestSignInLink");
+    const accountMenu = document.getElementById("accountMenu");
+    const accessNote = document.getElementById("dashboardAccessNote");
+
+    if (guestSignInLink) {
+        guestSignInLink.hidden = isAuthenticated;
+    }
+
+    if (accountMenu) {
+        accountMenu.hidden = !isAuthenticated;
+    }
+
+    if (accessNote) {
+        accessNote.textContent = isAuthenticated
+            ? "Your dashboard is personalized from your profile."
+            : "Search without signing in. Log in to personalize your feed and watchlist.";
+    }
 }
 
 function syncMediaToggle(availableModes = ["all", "movie", "series"], mode = currentMediaMode) {
@@ -187,6 +228,8 @@ const setupNavigation = () => {
     const accountDropdown = document.getElementById("accountDropdown");
     const logoutBtn = document.getElementById("logoutBtn");
 
+    if (!isAuthenticated) return;
+
     if (accountTrigger && accountDropdown) {
         accountTrigger.addEventListener("click", (event) => {
             event.stopPropagation();
@@ -270,6 +313,20 @@ function bindDashboardSearch() {
             }
         });
     }
+}
+
+async function fetchPublicDashboardData() {
+    const fallbackPath = currentMediaMode === "series"
+        ? "/discovery/series/trending"
+        : "/discovery/movies/trending";
+
+    const response = await fetch(`${API_BASE_URL}${fallbackPath}`);
+    if (!response.ok) {
+        return createPublicDashboardData([], currentMediaMode);
+    }
+
+    const items = await response.json();
+    return createPublicDashboardData(Array.isArray(items) ? items : [], currentMediaMode);
 }
 
 // 3. HERO CAROUSEL LOGIC
@@ -388,8 +445,16 @@ async function loadDailyRecommendations() {
 
     setDashboardSwitching(true);
     try {
+        if (!isAuthenticated) {
+            const publicData = await fetchPublicDashboardData();
+            syncMediaToggle(publicData.available_media_modes, publicData.media_mode || currentMediaMode);
+            updateDashboardText(publicData.media_mode || currentMediaMode);
+            renderDashboardFromData(publicData);
+            return;
+        }
+
         const response = await fetch(`${API_BASE_URL}/recommendations/personalized?media_mode=${encodeURIComponent(currentMediaMode)}&t=${Date.now()}`, {
-            headers: { Authorization: `Bearer ${currentToken}` },
+            headers: getAuthHeaders(),
         });
 
         if (response.ok) {
@@ -433,11 +498,11 @@ async function loadDailyRecommendations() {
             // 4. Save to Cache
             sessionStorage.setItem(cacheKey, JSON.stringify(apiData));
         } else {
-            fetchTrendingFallback();
+            await fetchTrendingFallback();
         }
     } catch (error) {
         console.error("Error loading recommendations:", error);
-        fetchTrendingFallback();
+        await fetchTrendingFallback();
     } finally {
         window.setTimeout(() => setDashboardSwitching(false), 120);
     }
@@ -486,9 +551,7 @@ async function fetchTrendingFallback() {
         const fallbackPath = currentMediaMode === "series"
             ? "/discovery/series/trending"
             : "/discovery/movies/trending";
-        const response = await fetch(`${API_BASE_URL}${fallbackPath}`, {
-            headers: { Authorization: `Bearer ${currentToken}` },
-        });
+        const response = await fetch(`${API_BASE_URL}${fallbackPath}`);
 
         if (response.ok) {
             const items = await response.json();
@@ -758,6 +821,7 @@ function initFanCarouselNav() {
 
 // 5. INITIALIZATION
 document.addEventListener("DOMContentLoaded", () => {
+    updateAccessState();
     setupNavigation();
     bindDashboardSearch();
     bindMediaToggle();
@@ -877,6 +941,11 @@ function showToast(message) {
 }
 
 async function addItemToWatchlist(item) {
+    if (!isAuthenticated) {
+        showToast("Sign in to save to your watchlist");
+        return;
+    }
+
     if (!window.addToWatchlist) {
         showToast("Watchlist service unavailable");
         return;

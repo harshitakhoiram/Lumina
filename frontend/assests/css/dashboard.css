@@ -405,6 +405,24 @@ h1 {
     padding: 0;
 }
 
+.account-signin-link {
+  text-decoration: none;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #ff8c1a, #ffb347);
+  color: #111 !important;
+  box-shadow: 0 10px 20px rgba(255, 152, 37, 0.18);
+}
+
+.account-signin-link .profile-circle {
+  background-color: rgba(17, 17, 17, 0.18);
+}
+
+.account-signin-link:hover {
+  color: #111 !important;
+  transform: translateY(-1px);
+}
+
 .account-dropdown {
     position: absolute;
     top: calc(100% + 12px);

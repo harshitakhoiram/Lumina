@@ -12,15 +12,40 @@
     <link rel="stylesheet" href="assests/css/responsive.css">
     <script src="assests/js/auth.js" defer></script>
 </head>
-    <body>
-        <div class="navbar">
-            <div class="container">
-                <div class="navbar-container">          
-                        <a class="logo" href="#"><img src="assests/LuminaLogo.png"></a>                                   
-                    <div class="flex-items">
-                        
-                        <div>
-                            <a class="sign-btn" href="#">Sign In</a>
+<body>
+    <header class="topbar">
+        <div class="topbar-inner">
+            <a class="brand" href="#">
+                <img src="assests/LuminaLogo.png" alt="Lumina" />
+            </a>
+
+            <nav class="topnav">
+                <a href="#watchlist">WATCHLIST</a>
+                <a href="#about">ABOUT US</a>
+                <a href="login.html" class="sign-link">SIGN IN</a>
+                <button class="lang-btn" type="button">EN ▼</button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="page">
+        <section class="hero-search">
+            <form class="searchbar" action="#" method="get">
+                <input type="text" placeholder="search a movie, and we’ll recommend similar" aria-label="Search movies" />
+                <button type="submit" aria-label="Search">
+                    <i class="fas fa-search"></i>
+                </button>
+            </form>
+        </section>
+
+        <section class="featured-row">
+            <div class="featured-grid">
+                <div class="featured-col featured-left">
+                    <h2 class="card-head">MOVIE OF THE DAY</h2>
+
+                    <div class="movie-card">
+                        <div class="movie-poster placeholder-box">
+                            <!-- poster placeholder -->
                         </div>
                     </div>      
                 </div>
@@ -43,22 +68,42 @@
                     </div>
                 </div>
                 </div>
-        </div>
-        <div class="hr"></div>
-<div class="asked-questions-container">
-    <h1 class="questions-header">Frequently Asked Questions</h1>
-    <div class="accordion-menu">
+            </div>
 
-        <div class="accordion-item">
-            <div class="faq-header" style="user-select: none;">What is Lumina?</div>
-            <div class="accordion-item paragraph">
-                <div class="paragraph-content">
-                    Lumina is an AI-powered discovery platform designed to help you find your next favorite movie, series, or book. We use intelligent algorithms to sift through thousands of titles to provide a personalized "Recommendation of the Day" just for you.
-                    <br><br>
-                    Whether you're in the mood for a cinematic masterpiece or a gripping novel, Lumina helps you spend less time searching and more time enjoying.
+            <div class="new-release-wrap">
+                <h2 class="new-release-title">NEW RELEASE:</h2>
+
+                <div class="release-grid">
+                    <article class="release-card">
+                        <span class="fav-star">★</span>
+                        <div class="release-poster placeholder-tile"></div>
+                    </article>
+
+                    <article class="release-card">
+                        <span class="fav-star">★</span>
+                        <div class="release-poster placeholder-tile"></div>
+                    </article>
+
+                    <article class="release-card">
+                        <span class="fav-star">★</span>
+                        <div class="release-poster placeholder-tile"></div>
+                    </article>
                 </div>
             </div>
-        </div>
+        </section>
+
+        <section class="about-section" id="about">
+            <h2>ABOUT US</h2>
+
+            <div class="accordion-menu">
+                <div class="accordion-item">
+                    <button class="faq-header" type="button">WHAT IS LUMINA?</button>
+                    <div class="paragraph">
+                        <div class="paragraph-content">
+                            Lumina is an AI-powered discovery platform for movies, series, and more.
+                        </div>
+                    </div>
+                </div>
 
         <div class="accordion-item">
             <div class="faq-header" style="user-select: none;">Does Lumina cost anything?</div>
