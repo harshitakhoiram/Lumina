@@ -1,272 +1,537 @@
-/* --- GLOBAL STYLES --- */
 * {
-    padding: 0;
     margin: 0;
+    padding: 0;
     box-sizing: border-box;
 }
 
+:root{
+    --bg: #bedc9a;
+    --wine: #7d0029;
+    --wine-2: #8f2140;
+    --text: #7d0029;
+    --light: #d7eab8;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
 body {
-    background: #000000;
-    font-family: Arial, Helvetica, sans-serif;
-    color: #fff;
-    line-height: 1.4;
+    background: var(--bg);
+    color: var(--text);
+    font-family: Georgia, "Times New Roman", serif;
     overflow-x: hidden;
 }
 
-/* --- NAVIGATION --- */
-.navbar {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    z-index: 99;
-    background: linear-gradient(to bottom, #00000099, #00000000);
+a {
+    color: inherit;
+    text-decoration: none;
 }
 
-.navbar-container {
+button, input {
+    font: inherit;
+}
+
+.topbar {
+    width: 100%;
+    border-top: 2px solid var(--wine);
+    border-bottom: 2px solid var(--wine);
+    padding: 8px 0;
+}
+
+.topbar-inner {
+    width: min(1200px, calc(100% - 40px));
+    margin: 0 auto;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 10px;
-    margin: 0 30px;
+    gap: 20px;
+    min-height: 54px;
 }
 
-.flex-items {
-    display: flex;
-    align-items: center;
-}
-
-.logo img {
-    user-select: none;
-    width: 250px;
-}
-
-.sign-btn {
-    padding: 10px 18px;
-    margin: 15px;
-    border-radius: 3px;
-    background: #ff751f;
-    color: #fff;
-    text-decoration: none;
-    font-size: 16px;
-    font-weight: 500;
-}
-
-/* --- HERO / START CONTENT --- */
-.start-content-container {
-    position: relative;
-    display: flex;
-    align-items: flex-start;
-    justify-content: center;
-    height: 800px;
-    background: url("../bg.png") no-repeat;
-    background-size: cover;
-    background-position: center;
-    z-index: 1; 
-    border-bottom: 8px solid #222222;
-    box-shadow: 0px -50px 100px rgb(0, 0, 0) inset;
-}
-
-.start-content-container::after {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    z-index: -1;
-    background-color: #00000099;
-    width: 100%;
-    height: 100%;
-}
-
-.start-content {
-    text-align: center;
-    width: 750px;
-    margin-top: 150px;
-}
-
-.header-text { font-size: 62px; }
-.header-text-subtitle { padding: 15px; font-size: 28px; font-weight: 500; }
-.header-text-detail { padding: 15px; font-size: 18px; font-weight: 500; }
-
-/* --- FORM & INPUTS --- */
-.email {
-    position: relative;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.em-input, .em-input-faq {
-    height: 70px;
-    padding: 20px 15px 0 15px;
-    border: 1px solid #aaa;
-    outline: 0;
-    width: 100%;
-    font-size: 18px;
-    background: white;
-    color: black;
-}
-
-.placeLabel, .placeLabel-faq {
-    position: absolute;
-    left: 15px;
-    color: #8d8d8d;
-    font-size: 16px;
-    transition: 0.1s ease;
-    pointer-events: none;
-}
-
-.em-input:focus ~ .placeLabel,
-.em-input:not(:placeholder-shown) ~ .placeLabel,
-.em-input-faq:focus ~ .placeLabel-faq,
-.em-input-faq:not(:placeholder-shown) ~ .placeLabel-faq {
-    transform: translateY(-20px) scale(0.75);
-}
-
-.email-btn {
-    height: 70px;
-    width: 40%;
-    background: #ff751f;
-    color: #fff;
-    border: 1px solid #ff751f;
-    font-size: 26px;
-    cursor: pointer;
-}
-
-.error { border-bottom: 3px solid #ff6004 !important; }
-
-/* --- FAQ SECTION --- */
-.hr { border-bottom: 8px solid #222222; }
-
-.asked-questions-container {
-    max-width: 815px;
-    margin: 50px auto;
-    padding: 0 20px;
-}
-
-.questions-header {
-    font-size: 50px;
-    text-align: center;
-    margin-bottom: 40px;
-    font-weight: 700;
-}
-
-.accordion-menu {
-    list-style: none;
-    width: 100%;
-}
-
-.accordion-item {
-    margin-bottom: 10px;
-}
-
-.faq-header {
-    position: relative; /* CRITICAL for the plus sign icon */
-    display: flex;
-    align-items: center;
-    padding: 22px 30px;
-    background: #303030;
-    font-size: 24px;
-    cursor: pointer;
-    user-select: none;
-    transition: background 0.2s;
-}
-
-.faq-header:hover { background: #404040; }
-
-/* THE PLUS SIGN Icon */
-.faq-header::after {
-    content: '+';
-    position: absolute;
-    right: 30px;
-    font-size: 45px;
-    font-weight: 300;
-    transition: transform 0.3s ease;
-}
-
-/* Rotate icon when item is active */
-.accordion-item.active .faq-header::after {
-    transform: rotate(45deg);
-}
-
-.accordion-item.active .faq-header {
-    background: #454545;
-}
-
-/* FAQ Answer Content */
-.paragraph {
-    max-height: 0;
-    overflow: hidden;
-    background: #303030;
-    transition: max-height 0.4s cubic-bezier(0.5, 0, 0.1, 1);
-    font-size: 20px;
-    line-height: 1.6; /* Breathing room for text */
-    color: #efefef; /* Slightly off-white for better reading */
-}
-
-.paragraph-content {
-    padding: 30px;
-    border-top: 2px solid #141414;
-}
-
-/* --- UNIFORM MINIMALIST FOOTER --- */
-.footer {
-    width: 900px;
-    margin: 60px auto;
-    padding: 0 20px;
-    color: #787878;
-}
-
-/* Ensure ALL footer text (headers, links, and end-text) look exactly the same */
-.question-call, 
-.question-call a, 
-.footer-end, 
-.footer-ul li a {
-    color: #787878 !important; /* Overrides default blue links */
-    font-size: 13px;
-    font-weight: normal; /* Removes bold from h3/headers */
-    text-decoration: none;
-}
-
-.question-call {
-    margin-bottom: 20px;
+.brand img {
+    height: 48px;
+    width: auto;
     display: block;
 }
 
-.footer-ul {
-    list-style: none;
+.topnav {
+    display: flex;
+    align-items: center;
+    gap: 52px;
+    font-size: 22px;
+}
+
+.lang-btn {
+    background: transparent;
+    border: 0;
+    color: var(--wine);
+    cursor: pointer;
+    font-size: 22px;
+}
+
+.page {
+    width: 100%;
+}
+
+.hero-search,
+.featured-row,
+.watchlist-section,
+.new-release-section,
+.about-section,
+.footer {
+    width: min(1200px, calc(100% - 40px));
+    margin: 0 auto;
+}
+
+.hero-search {
+    padding: 28px 0 22px;
+}
+
+.searchbar {
+    height: 36px;
+    background: var(--wine);
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    padding: 0 18px;
+}
+
+.searchbar input {
+    flex: 1;
+    height: 100%;
+    background: transparent;
+    border: 0;
+    outline: 0;
+    color: #f7e6e6;
+    font-size: 18px;
+    padding-left: 10px;
+}
+
+.searchbar input::placeholder {
+    color: #e7c7cf;
+    opacity: 1;
+}
+
+.searchbar button {
+    width: 48px;
+    height: 100%;
+    background: transparent;
+    border: 0;
+    color: #f3dfe3;
+    cursor: pointer;
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 15px;
+    place-items: center;
+    font-size: 18px;
+}
+
+.section-head,
+.about-section > h2,
+.watchlist-section > h2,
+.new-release-section > h2,
+.ad-label {
+    text-align: center;
+    font-size: 21px;
+    font-weight: 400;
+    letter-spacing: 1px;
+    margin: 12px 0 14px;
+    text-transform: uppercase;
+}
+
+.section-head h2 {
+    margin: 0;
+    text-align: center;
+    font-size: 26px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--wine);
+    font-weight: 700;
+}
+
+.featured-grid {
+    display: grid;
+    grid-template-columns: 1.35fr 0.9fr;
+    gap: 26px;
+    align-items: start;
+    margin-bottom: 48px;
+}
+
+.movie-card {
+    background: var(--wine);
+    border-radius: 28px;
+    padding: 14px;
+    display: grid;
+    grid-template-columns: 1.35fr 0.75fr;
+    gap: 18px;
+    min-height: 160px;
+}
+
+.movie-poster {
+    border-radius: 10px;
+    min-height: 140px;
+}
+
+.cast-block h3 {
+    text-align: center;
+    font-size: 18px;
+    font-weight: 400;
+    margin-bottom: 10px;
+    color: #f6dfe2;
+}
+
+.cast-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    justify-items: center;
+}
+
+.placeholder-box {
+    background: linear-gradient(135deg, #e7d8c1, #c98259);
+}
+
+.placeholder-circle {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #eadbc9, #b96d5c);
+}
+
+.genres-card {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px 14px;
+    align-content: start;
+    padding-top: 6px;
+}
+
+.genre-pill {
+    height: 38px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--wine);
+    color: #f8e5e5;
+    font-size: 18px;
+    cursor: pointer;
+}
+
+.ad-label {
+    text-align: left;
+    margin-top: 0;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.ad-banner {
+    border: 8px solid var(--wine-2);
+    border-radius: 18px;
+    padding: 4px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+    background: var(--wine);
+}
+
+.placeholder-banner {
+    min-height: 56px;
+    background: linear-gradient(90deg, #efefef, #d0d0d0);
+}
+
+.watchlist-section {
+    margin-top: 70px;
+    background: var(--wine);
+    padding: 44px 0 56px;
+    color: #f3d9db;
+}
+
+.watchlist-section > h2,
+.new-release-section > h2,
+.about-section > h2 {
+    font-size: 26px;
     margin-bottom: 30px;
 }
 
-.footer-ul li a:hover, 
-.question-call a:hover {
+.watch-card {
+    max-width: 640px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.watch-icon {
+    width: 32px;
+    height: 32px;
+    margin: 0 auto 16px;
+    background: #b7d59b;
+    border-radius: 2px;
+    display: grid;
+    place-items: center;
+    color: var(--wine);
+}
+
+.watch-cta {
+    font-style: italic;
+    font-size: 22px;
+    margin-bottom: 10px;
+}
+
+.watch-copy {
+    font-size: 18px;
+    margin-bottom: 16px;
+}
+
+.watch-btn {
+    display: inline-block;
+    padding: 12px 22px;
+    border-radius: 999px;
+    background: #d0e7b7;
+    color: var(--wine);
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.new-release-section {
+    padding: 26px 0 40px;
+}
+
+.release-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+}
+
+.release-card {
+    position: relative;
+    background: #cde4ae;
+    border-radius: 26px;
+    min-height: 160px;
+    padding: 14px;
+}
+
+.fav-star {
+    position: absolute;
+    top: 10px;
+    left: 12px;
+    color: var(--wine);
+    font-size: 18px;
+    z-index: 2;
+}
+
+.release-poster {
+    width: 86%;
+    height: 128px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #f1f1f1, #b9b9b9);
+}
+
+.about-section {
+    padding: 42px 0 28px;
+}
+
+.accordion-menu {
+    display: grid;
+    gap: 12px;
+}
+
+.accordion-item {
+    overflow: hidden;
+}
+
+.faq-header {
+    width: 100%;
+    border: 0;
+    background: var(--wine);
+    color: #f7e7ea;
+    border-radius: 999px;
+    padding: 16px 24px;
+    font-size: 19px;
+    cursor: pointer;
+    position: relative;
+    text-align: center;
+}
+
+.faq-header::after {
+    content: "+";
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 28px;
+    font-weight: 400;
+}
+
+.accordion-item.active .faq-header::after {
+    content: "×";
+}
+
+.paragraph {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.35s ease;
+    background: transparent;
+}
+
+.paragraph-content {
+    padding: 14px 22px 6px;
+    color: #5c1230;
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+.footer {
+    border-top: 3px solid var(--wine);
+    padding: 22px 0 24px;
+    margin-top: 22px;
+}
+
+.footer-top,
+.footer-end {
+    font-size: 18px;
+    margin-bottom: 18px;
+}
+
+.footer-links {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 28px;
+    margin-bottom: 18px;
+    font-size: 16px;
+}
+
+.footer-links a,
+.footer-top a {
     text-decoration: underline;
 }
 
-.footer-end {
-    margin-top: 30px;
-    text-transform: none; 
+.placeholder-tile {
+    background: linear-gradient(135deg, #f2f2f2, #cfcfcf);
 }
 
-/* --- MEDIA QUERIES --- */
-@media only screen and (max-width: 948px) {
-    .header-text { font-size: 42px; }
-    .asked-questions-container { width: 90%; }
-    .faq-header { font-size: 20px; }
-    .footer-ul { grid-template-columns: repeat(3, 1fr); width: 100%; }
-    .footer { width: 90%; }
-    .start-content { margin-top: 120px; }
+/* Combined watchlist + new release section (matches provided palette) */
+.watch-release-section {
+    margin-top: 40px; /* add gap so it doesn't overlap featured-row */
+    background: #670626; /* dark wine background requested */
+    padding: 48px 0 60px;
+    color: #f3d9db; /* keep existing light text for watchlist copy */
 }
 
-@media only screen and (max-width: 668px) {
-    .email { flex-direction: column; }
-    .email-btn { width: 200px; height: 50px; margin-top: 20px; font-size: 18px; border-radius: 4px; }
-    .header-text { font-size: 32px; }
-    .questions-header { font-size: 30px; }
-    .logo img { width: 150px; }
-    .footer-ul { grid-template-columns: repeat(2, 1fr); }
-    .start-content { margin-top: 90px; }
+/* keep the watchlist styling but scoped to new combined section */
+.watch-release-section .watch-title {
+    font-size: 26px;
+    margin-bottom: 26px;
+    text-align: left;
+    color: #f3d9db;
+    text-transform: uppercase;
+    padding-left: calc((100% - min(1200px, 100% - 40px)) / 2 + 0px); /* aligns with container left edge */
+}
+
+.watch-release-section .watch-card {
+    max-width: 640px;
+    margin: 0 auto 40px;
+    text-align: center;
+}
+
+/* New release title uses the light green from palette */
+.watch-release-section .new-release-title {
+    font-size: 26px;
+    margin: 24px 0 18px;
+    text-align: left;
+    color: #bad797; /* requested accent for 'NEW RELEASE' text */
+    text-transform: uppercase;
+    padding-left: calc((100% - min(1200px, 100% - 40px)) / 2 + 0px);
+}
+
+/* ensure the release-grid sits visually under the watchlist area */
+.watch-release-section .release-grid {
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+/* keep existing .release-card, .release-poster etc. styling (already present) */
+
+/* small responsive tweak so titles keep alignment on small screens */
+@media (max-width: 600px) {
+    .watch-release-section .watch-title,
+    .watch-release-section .new-release-title {
+        text-align: center;
+        padding-left: 0;
+    }
+}
+
+@media (max-width: 900px) {
+    .featured-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .topnav {
+        gap: 20px;
+        font-size: 16px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+
+    .lang-btn {
+        font-size: 16px;
+    }
+
+    .movie-card {
+        grid-template-columns: 1fr;
+    }
+
+    .release-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 600px) {
+    .topbar-inner,
+    .hero-search,
+    .featured-row,
+    .watchlist-section,
+    .new-release-section,
+    .about-section,
+    .footer {
+        width: calc(100% - 22px);
+    }
+
+    .topbar-inner {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .topnav {
+        width: 100%;
+        justify-content: space-between;
+        gap: 10px;
+    }
+
+    .searchbar input {
+        font-size: 14px;
+    }
+
+    .section-head,
+    .about-section > h2,
+    .watchlist-section > h2,
+    .new-release-section > h2,
+    .ad-label {
+        font-size: 16px;
+    }
+
+    .watch-cta {
+        font-size: 18px;
+    }
+
+    .watch-copy {
+        font-size: 14px;
+    }
+
+    .faq-header {
+        font-size: 14px;
+        text-align: left;
+    }
+
+    .faq-header::after {
+        right: 14px;
+    }
 }

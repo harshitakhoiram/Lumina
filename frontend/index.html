@@ -1,15 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <script src="https://kit.fontawesome.com/e2bce648c2.js" crossorigin="hurphygames"></script> 
-    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+    <script src="https://kit.fontawesome.com/e2bce648c2.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous" />
     <title>Lumina</title>
-    <link rel="stylesheet" href="assests/css/auth.css">
-    <link rel="stylesheet" href="assests/css/responsive.css">
+
+    <link rel="stylesheet" href="assests/css/auth.css" />
+    <link rel="stylesheet" href="assests/css/responsive.css" />
     <script src="assests/js/auth.js" defer></script>
 </head>
 <body>
@@ -47,26 +48,50 @@
                         <div class="movie-poster placeholder-box">
                             <!-- poster placeholder -->
                         </div>
-                    </div>      
-                </div>
-            </div>
-        </div>
-        <div class="start-content-container">
-            <div class="start-content">
-                <div>
-                    
-                    <h2 class="header-text">Find Your Next Obsession</h2>
-                    <h3 class="header-text-subtitle">Because good taste deserves good suggestions</h3>
-                    <h4 class="header-text-detail">Ready to discover? Enter your email to create or restart your membership.</h4>
-                    <form id="email" class="email">                         
-                        <input onkeydown="emailInputMessage()" class="em-input border " type="email" autocomplete="email" required="required" placeholder=" " maxlength="50" minlength="6">
-                        <label class="placeLabel">Email Address</label>                
-                        <button class="email-btn" type="submit">Get Started ></button>
-                    </form>
-                    <div class="email-message">
-                        
+
+                        <div class="cast-block">
+                            <h3>CAST</h3>
+                            <div class="cast-grid">
+                                <div class="cast-avatar placeholder-circle"></div>
+                                <div class="cast-avatar placeholder-circle"></div>
+                                <div class="cast-avatar placeholder-circle"></div>
+                                <div class="cast-avatar placeholder-circle"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
+
+                <div class="featured-col featured-right">
+                    <h2 class="card-head">BROWSE TOP GENRES</h2>
+
+                    <div class="genres-card">
+                        <button type="button" class="genre-pill">THRILLER</button>
+                        <button type="button" class="genre-pill">COMEDY</button>
+                        <button type="button" class="genre-pill">ROM-COM</button>
+                        <button type="button" class="genre-pill">SCI-FI</button>
+                        <button type="button" class="genre-pill">HORROR</button>
+                        <button type="button" class="genre-pill">DRAMA</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="ad-label">AD SENSE</div>
+            <div class="ad-banner">
+                <div class="ad-slot placeholder-banner"></div>
+                <div class="ad-slot placeholder-banner"></div>
+            </div>
+        </section>
+
+        <!-- Combined Watchlist + New Releases section -->
+        <section class="watch-release-section" id="watchlist">
+            <div class="watchlist-inner">
+                <h2 class="watch-title">YOU WANTED TO WATCH...</h2>
+
+                <div class="watch-card">
+                    <div class="watch-icon"><i class="fas fa-star"></i></div>
+                    <p class="watch-cta">sign in to access your watchlist</p>
+                    <p class="watch-copy">Your saved shows and movies to keep track of what you want to watch</p>
+                    <a class="watch-btn" href="login.html">SIGN IN TO LUMINA</a>
                 </div>
             </div>
 
@@ -105,53 +130,51 @@
                     </div>
                 </div>
 
-        <div class="accordion-item">
-            <div class="faq-header" style="user-select: none;">Does Lumina cost anything?</div>
-            <div class="accordion-item paragraph">
-                <div class="paragraph-content">
-                    Lumina is currently a free-to-use project developed to showcase the power of AI in content discovery. You can explore movies and books without any subscription fees or hidden costs.
+                <div class="accordion-item">
+                    <button class="faq-header" type="button">DOES LUMINA COST ANYTHING?</button>
+                    <div class="paragraph">
+                        <div class="paragraph-content">
+                            Lumina is currently free to use.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <button class="faq-header" type="button">HOW DOES THE LUMINA RECOMMENDATIONS WORK?</button>
+                    <div class="paragraph">
+                        <div class="paragraph-content">
+                            Recommendations will be powered by your preferences and content data.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <button class="faq-header" type="button">CAN I USE LUMINA ON MY PHONE?</button>
+                    <div class="paragraph">
+                        <div class="paragraph-content">
+                            Yes, the layout is built to be responsive.
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <div class="accordion-item">
-            <div class="faq-header" style="user-select: none;">How does the recommendation engine work?</div>
-            <div class="accordion-item paragraph">
-                <div class="paragraph-content">
-                    Lumina connects to high-quality external APIs like TMDB for movies and Google Books for literature. Our backend logic analyzes this data against your preferences to suggest content that matches your specific tastes.
-                </div>
+        <footer class="footer">
+            <div class="footer-top">
+                <p>CONTACT THE DEVELOPERS: <a href="mailto:devsupport@lumina-ai.com">devsupport@lumina-ai.com</a></p>
             </div>
-        </div>
 
-        <div class="accordion-item">
-            <div class="faq-header" style="user-select: none;">Can I save my recommendations?</div>
-            <div class="accordion-item paragraph">
-                <div class="paragraph-content">
-                    Yes! By creating a Lumina account, you can save your favorite picks to "My List" and help the AI learn your preferences better over time.
-                </div>
-            </div>
-        </div>
+            <ul class="footer-links">
+                <li><a href="#">TERMS OF US</a></li>
+                <li><a href="#">PRIVACY</a></li>
+                <li><a href="#">LEGAL</a></li>
+                <li><a href="#">HELP CENTRE</a></li>
+                <li><a href="#">CAREERS</a></li>
+                <li><a href="#">CONTACT US</a></li>
+            </ul>
 
-    </div>
-</div>
-
-
-<div class="hr"></div>
-
-<div class="footer">
-    <h3 class="question-call">Contact the Developers: <a href="mailto:support@lumina-ai.com">support@lumina-ai.com</a></h3>
-    <ul class="footer-ul">
-        <li><a href="#">FAQ</a></li>
-        <li><a href="#">Help Center</a></li>
-        <li><a href="#">Account</a></li>
-        <li><a href="#">Movies</a></li>
-        <li><a href="#">Books</a></li>
-        <li><a href="#">Privacy</a></li>
-        <li><a href="#">Terms of Use</a></li>
-        <li><a href="#">Contact Us</a></li>
-    </ul>
-    <h3 class="footer-end">Lumina AI Discovery</h3>
-</div>
-  
-    </body>
+            <div class="footer-end">Lumina AI Discovery</div>
+        </footer>
+    </main>
+</body>
 </html>
